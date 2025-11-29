@@ -1,3 +1,4 @@
+
 // Enums for filtering
 export enum Brand {
   SONO = 'SONO',
@@ -47,7 +48,9 @@ export interface NearbyPlace {
   latitude?: number;
   longitude?: number;
   image_url?: string;
+  images?: string[]; // Multiple images for slider
   detail_content?: string; // HTML or text for detail view
+  info_attributes?: { label: string; value: string; }[]; // Dynamic Key-Value pairs for extra info
 }
 
 export interface RoomType {

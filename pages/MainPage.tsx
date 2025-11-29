@@ -1,14 +1,18 @@
+
 import React, { useState, useEffect } from 'react';
 import { Resort, Region, Brand } from '../types';
 import { useResorts } from '../core/hooks/useResorts';
 import MapController from '../components/Map/MapController';
 import ResortDetailPanel from '../components/ResortDetail/ResortDetailPanel';
-import { IconSearch, IconMapPin, IconChevronLeft, IconMenu } from '../components/Icons';
+import ApplicationGuide from '../components/Guide/ApplicationGuide';
+import { IconSearch, IconMapPin, IconChevronLeft, IconMenu, IconBookOpen } from '../components/Icons';
+import { ImageWithFallback } from '../components/common/ImageWithFallback';
 
 const MainPage: React.FC = () => {
   const { resorts, totalCount, loading, filters, updateFilter } = useResorts();
   const [selectedResort, setSelectedResort] = useState<Resort | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const handleBackToList = () => {
       setSelectedResort(null);
@@ -16,7 +20,16 @@ const MainPage: React.FC = () => {
 
   const handleResortSelect = (resort: Resort) => {
     setSelectedResort(resort);
+    setShowGuide(false);
     setIsSidebarCollapsed(false); // Auto-open sidebar on selection
+  };
+
+  const toggleGuide = () => {
+      setShowGuide(!showGuide);
+      if (!showGuide) {
+          setSelectedResort(null);
+          setIsSidebarCollapsed(false);
+      }
   };
 
   // Trigger map resize when sidebar toggles
@@ -26,13 +39,6 @@ const MainPage: React.FC = () => {
     }, 350); // Wait for transition (300ms) to finish
     return () => clearTimeout(timer);
   }, [isSidebarCollapsed]);
-
-  // Image Error Handler
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    e.currentTarget.onerror = null;
-    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
-    e.currentTarget.className = e.currentTarget.className + " bg-slate-100 p-2";
-  };
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 relative">
@@ -48,12 +54,14 @@ const MainPage: React.FC = () => {
       >
         {/* Sidebar Content */}
         <div className="w-full md:w-96 flex flex-col h-full whitespace-nowrap bg-white">
-            {/* Conditional Rendering: List View or Detail View */}
+            {/* Conditional Rendering Logic */}
             {selectedResort ? (
-            <ResortDetailPanel 
-                resort={selectedResort} 
-                onBack={handleBackToList} 
-            />
+                <ResortDetailPanel 
+                    resort={selectedResort} 
+                    onBack={handleBackToList} 
+                />
+            ) : showGuide ? (
+                <ApplicationGuide onBack={() => setShowGuide(false)} />
             ) : (
             <>
                 {/* Header */}
@@ -66,14 +74,25 @@ const MainPage: React.FC = () => {
                         <p className="text-xs text-slate-400 font-medium ml-1">Smart Resort Locator</p>
                     </div>
                     
-                    {/* Close Sidebar Button (Visible on all screens inside sidebar) */}
-                    <button 
-                        onClick={() => setIsSidebarCollapsed(true)}
-                        className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
-                        title="Close Sidebar"
-                    >
-                        <IconChevronLeft className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center space-x-1">
+                        {/* Guide Toggle Button */}
+                        <button 
+                            onClick={toggleGuide}
+                            className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-teal-600 transition-colors"
+                            title="Application Guide"
+                        >
+                            <IconBookOpen className="w-5 h-5" />
+                        </button>
+                        
+                        {/* Close Sidebar Button (Visible on all screens inside sidebar) */}
+                        <button 
+                            onClick={() => setIsSidebarCollapsed(true)}
+                            className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                            title="Close Sidebar"
+                        >
+                            <IconChevronLeft className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -136,10 +155,9 @@ const MainPage: React.FC = () => {
                         onClick={() => handleResortSelect(resort)}
                         className="group p-3 rounded-xl border bg-white border-slate-100 hover:border-teal-200 hover:shadow-sm transition-all cursor-pointer flex items-start space-x-3"
                     >
-                        <img 
+                        <ImageWithFallback 
                             src={resort.thumbnail_url} 
                             alt={resort.name} 
-                            onError={handleImageError}
                             className="w-16 h-16 rounded-lg object-cover bg-slate-200 flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0 whitespace-normal">

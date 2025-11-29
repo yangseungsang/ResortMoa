@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { Resort, PlaceCategory } from '../../types';
 import { safeLatLng } from '../../core/utils/mapUtils';
+import { IconHome } from '../Icons';
 
 // No external CDN imports needed for markers anymore.
 
@@ -16,6 +17,9 @@ const KOREA_BOUNDS = L.latLngBounds(
     [32.8, 124.5], // South West
     [38.9, 132.0]  // North East
 );
+
+const INITIAL_CENTER = L.latLng(36.5, 127.8);
+const INITIAL_ZOOM = 7;
 
 // Custom SVG Marker (Offline compatible) - Resort Pin
 const createCustomMarker = (color: string = '#0d9488') => {
@@ -34,7 +38,7 @@ const createCustomMarker = (color: string = '#0d9488') => {
   });
 };
 
-// Custom SVG Marker (Offline compatible) - Nearby Dot
+// Custom SVG Marker (Offline compatible) - Nearby Dot (Fallback)
 const createNearbyMarkerIcon = (color: string) => {
   const svg = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" stroke="#ffffff" stroke-width="2">
@@ -47,6 +51,53 @@ const createNearbyMarkerIcon = (color: string) => {
     iconSize: [14, 14], // Fixed small size to act like a pin but unobtrusive
     iconAnchor: [7, 7],
     popupAnchor: [0, -7]
+  });
+};
+
+// Custom Image Marker - Nearby Pin with Thumbnail
+const createNearbyImageMarker = (imageUrl: string, color: string) => {
+  // Inline styles are used to ensure correct rendering within Leaflet's DivIcon structure
+  // Note: We include an onerror handler to hide the image if it fails to load
+  const html = `
+    <div style="position: relative; width: 44px; height: 50px;">
+        <div style="
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 3px solid ${color};
+            background: white;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            z-index: 10;
+            position: relative;
+        ">
+            <img 
+                src="${imageUrl}" 
+                style="width: 100%; height: 100%; object-fit: cover;" 
+                onerror="this.style.display='none'; this.parentElement.style.background='${color}';" 
+            />
+        </div>
+        <div style="
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid ${color};
+            z-index: 5;
+        "></div>
+    </div>
+  `;
+
+  return L.divIcon({
+    className: '', // Reset default classes
+    html: html,
+    iconSize: [44, 50],
+    iconAnchor: [22, 50], // Center X, Bottom Y
+    popupAnchor: [0, -50]
   });
 };
 
@@ -69,14 +120,11 @@ const MapController: React.FC<MapControllerProps> = ({ resorts, selectedResort, 
             maxZoom: 14,
         });
 
-        map.setView([36.5, 127.8], 7);
+        map.setView(INITIAL_CENTER, INITIAL_ZOOM);
 
-        // CartoDB Voyager (Does not require API Key, widely used)
-        // If completely offline, this tile layer might fail. 
-        // For strict offline, you would serve tiles from local server.
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; OpenStreetMap &copy; CARTO',
-          subdomains: 'abcd',
+        // OpenStreetMap Standard Tiles (Displays local language - Korean in Korea)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
           maxZoom: 19
         }).addTo(map);
 
@@ -117,7 +165,7 @@ const MapController: React.FC<MapControllerProps> = ({ resorts, selectedResort, 
               title: resort.name,
               icon: markerIcon,
               opacity: selectedResort && selectedResort.id !== resort.id ? 0.8 : 1.0,
-              zIndexOffset: isSelected ? 1000 : 0
+              zIndexOffset: isSelected ? 1000 : 100
           })
           .addTo(map)
           .on('click', () => onResortSelect(resort));
@@ -168,21 +216,42 @@ const MapController: React.FC<MapControllerProps> = ({ resorts, selectedResort, 
                 const pLatLng = safeLatLng(place.latitude, place.longitude);
                 if (pLatLng) {
                     let color = '#64748b';
-                    if (place.category === PlaceCategory.FOOD) color = '#f97316';
-                    if (place.category === PlaceCategory.TOUR) color = '#22c55e';
-                    if (place.category === PlaceCategory.STORE) color = '#3b82f6';
+                    if (place.category === PlaceCategory.FOOD) color = '#f97316'; // orange-500
+                    if (place.category === PlaceCategory.TOUR) color = '#22c55e'; // green-500
+                    if (place.category === PlaceCategory.STORE) color = '#3b82f6'; // blue-500
 
                     try {
-                        // Use L.marker with DivIcon for consistent animation with resort pins
+                        const imageUrl = place.images && place.images.length > 0 
+                            ? place.images[0] 
+                            : place.image_url;
+                        
+                        let markerIcon;
+                        
+                        if (imageUrl) {
+                             markerIcon = createNearbyImageMarker(imageUrl, color);
+                        } else {
+                             markerIcon = createNearbyMarkerIcon(color);
+                        }
+
                         const marker = L.marker(pLatLng, {
-                            icon: createNearbyMarkerIcon(color),
+                            icon: markerIcon,
                             zIndexOffset: 500
                         }).addTo(map);
 
+                        // Simple tooltip for quick ID
+                        marker.bindTooltip(place.name, {
+                            permanent: false,
+                            direction: 'bottom',
+                            offset: [0, 8],
+                            className: 'px-2 py-1 bg-white text-slate-800 text-xs rounded shadow border font-sans font-bold'
+                        });
+
+                        // Detailed Popup
                         marker.bindPopup(`
-                            <div class="text-xs font-sans">
-                                <strong class="block mb-1 text-slate-800">${place.name}</strong>
-                                <span class="text-slate-500">${place.category}</span>
+                            <div class="text-xs font-sans p-1">
+                                <strong class="block mb-1 text-slate-800 text-sm">${place.name}</strong>
+                                <span class="text-white px-2 py-0.5 rounded-full text-[10px]" style="background-color: ${color}">${place.category}</span>
+                                <p class="mt-1 text-slate-500">${place.description}</p>
                             </div>
                         `);
                         
@@ -194,23 +263,35 @@ const MapController: React.FC<MapControllerProps> = ({ resorts, selectedResort, 
             });
         }
     } else {
-        // Reset View
-        try {
-            const center = L.latLng(36.5, 127.8);
-            map.flyTo(center, 7, { duration: 0.8 });
-        } catch (e) {
-             try {
-                map.setView([36.5, 127.8], 7);
-            } catch (innerE) {}
-        }
+        // Handle when selection is cleared (optional, button handles manual reset)
     }
   }, [selectedResort]);
+
+  const handleResetView = () => {
+    if (mapInstanceRef.current) {
+      try {
+        mapInstanceRef.current.flyTo(INITIAL_CENTER, INITIAL_ZOOM, { duration: 0.8 });
+      } catch (e) {
+        mapInstanceRef.current.setView(INITIAL_CENTER, INITIAL_ZOOM);
+      }
+    }
+  };
 
   return (
     <div className="relative w-full h-full z-0">
       <div ref={mapContainerRef} className="w-full h-full bg-slate-200" />
+      
+      {/* Reset View Button */}
+      <button 
+        onClick={handleResetView}
+        className="absolute bottom-24 right-2.5 z-[400] bg-white w-[30px] h-[30px] flex items-center justify-center rounded border-2 border-slate-300 text-slate-600 hover:bg-slate-50 shadow-sm cursor-pointer"
+        title="Reset View"
+      >
+        <IconHome className="w-4 h-4" />
+      </button>
+
       <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-2 rounded text-[10px] text-slate-500 z-[400] pointer-events-none shadow-sm">
-        Korea Vector Map {selectedResort ? '• Nearby Places Active' : ''}
+        OpenStreetMap {selectedResort ? '• Nearby Places Active' : ''}
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+
 import { Resort, Brand, Region, PlaceCategory, ApplicationType } from '../types';
 
 export const MOCK_RESORTS: Resort[] = [
@@ -35,7 +36,7 @@ export const MOCK_RESORTS: Resort[] = [
         image_path: "https://picsum.photos/400/300?random=10",
         description_long: "The Gold Suite offers a luxurious stay with a panoramic view of Seoraksan Mountain. It features a spacious living room and modern kitchen amenities.",
         amenities: ["TV", "WiFi", "Refrigerator", "Induction", "Hair Dryer"],
-        more_images: ["https://picsum.photos/400/300?random=101", "https://picsum.photos/400/300?random=102"]
+        more_images: ["https://picsum.photos/400/300?random=101", "https://picsum.photos/400/300?random=102", "https://picsum.photos/400/300?random=108"]
       },
       {
         id: 102,
@@ -46,7 +47,7 @@ export const MOCK_RESORTS: Resort[] = [
         image_path: "https://picsum.photos/400/300?random=11",
         description_long: "Perfect for large families, the Royal Suite includes a private jacuzzi overlooking the mountains.",
         amenities: ["Jacuzzi", "TV", "WiFi", "Full Kitchen"],
-        more_images: ["https://picsum.photos/400/300?random=103"]
+        more_images: ["https://picsum.photos/400/300?random=103", "https://picsum.photos/400/300?random=104"]
       },
     ],
     nearby_places: [
@@ -60,7 +61,13 @@ export const MOCK_RESORTS: Resort[] = [
         latitude: 38.1190,
         longitude: 128.4650,
         image_url: "https://picsum.photos/400/300?random=201",
-        detail_content: "Seoraksan is the third-highest mountain in South Korea. The park is known for its views, clear streams, and vibrant flora."
+        images: ["https://picsum.photos/400/300?random=201", "https://picsum.photos/400/300?random=291", "https://picsum.photos/400/300?random=292"],
+        detail_content: "Seoraksan is the third-highest mountain in South Korea. The park is known for its views, clear streams, and vibrant flora.",
+        info_attributes: [
+            { label: "Operating Hours", value: "04:00 - 20:00" },
+            { label: "Entrance Fee", value: "Adults: 4,500 KRW" },
+            { label: "Parking", value: "Paid Parking Available" }
+        ]
       },
       {
         id: 202,
@@ -72,7 +79,13 @@ export const MOCK_RESORTS: Resort[] = [
         latitude: 38.2045,
         longitude: 128.5910,
         image_url: "https://picsum.photos/400/300?random=202",
-        detail_content: "A bustling traditional market offering a variety of local street foods, fresh seafood, and dried fish."
+        images: ["https://picsum.photos/400/300?random=202", "https://picsum.photos/400/300?random=222", "https://picsum.photos/400/300?random=223"],
+        detail_content: "A bustling traditional market offering a variety of local street foods, fresh seafood, and dried fish.",
+        info_attributes: [
+            { label: "Best Menu", value: "Sweet & Sour Chicken" },
+            { label: "Opening Hours", value: "08:00 - 24:00" },
+            { label: "Parking", value: "Public Parking Lot" }
+        ]
       },
     ],
   },
@@ -107,7 +120,8 @@ export const MOCK_RESORTS: Resort[] = [
         features: "1 Bedroom, 1 Living room, Ocean View",
         image_path: "https://picsum.photos/400/300?random=12",
         description_long: "Enjoy the stunning view of Gwangan Bridge from your living room.",
-        amenities: ["Ocean View", "TV", "Mini Bar"]
+        amenities: ["Ocean View", "TV", "Mini Bar"],
+        more_images: ["https://picsum.photos/400/300?random=12", "https://picsum.photos/400/300?random=122"]
       },
     ],
     nearby_places: [
@@ -121,7 +135,12 @@ export const MOCK_RESORTS: Resort[] = [
         latitude: 35.1587,
         longitude: 129.1604,
         image_url: "https://picsum.photos/400/300?random=203",
-        detail_content: "Haeundae Beach is an urban beach in Busan, South Korea. It is often dubbed one of the country's most famous and popular beaches."
+        images: ["https://picsum.photos/400/300?random=203", "https://picsum.photos/400/300?random=233", "https://picsum.photos/400/300?random=234"],
+        detail_content: "Haeundae Beach is an urban beach in Busan, South Korea. It is often dubbed one of the country's most famous and popular beaches.",
+        info_attributes: [
+            { label: "Best Time", value: "Summer (July - August)" },
+            { label: "Facilities", value: "Shower Booths, Parasols" }
+        ]
       },
     ],
   },
@@ -153,7 +172,8 @@ export const MOCK_RESORTS: Resort[] = [
         features: "Ocean view terrace, recently renovated",
         image_path: "https://picsum.photos/400/300?random=13",
         description_long: "Recently renovated rooms featuring modern interiors and a private terrace.",
-        amenities: ["Terrace", "Bathtub", "Coffee Machine"]
+        amenities: ["Terrace", "Bathtub", "Coffee Machine"],
+        more_images: ["https://picsum.photos/400/300?random=13", "https://picsum.photos/400/300?random=131"]
       },
     ],
     nearby_places: [
@@ -167,6 +187,7 @@ export const MOCK_RESORTS: Resort[] = [
         latitude: 33.2490,
         longitude: 126.5690,
         image_url: "https://picsum.photos/400/300?random=204",
+        images: ["https://picsum.photos/400/300?random=204", "https://picsum.photos/400/300?random=244"],
         detail_content: "Seogwipo Olle Market is the largest market in Seogwipo. It is a traditional market that was formed in the early 1960s."
       },
     ],
@@ -187,9 +208,9 @@ export const MOCK_RESORTS: Resort[] = [
     application_type: ApplicationType.LOTTERY,
     images: ["https://picsum.photos/600/400?random=41", "https://picsum.photos/600/400?random=42"],
     reviews: [{ id: 4, author: "Family Choi", rating: 5, comment: "The water park was amazing for kids!", date: "2024-07-20" }],
-    rooms: [{ id: 105, resort_id: 4, name: "Luxury Ocean", capacity: "4 Pax", features: "Ocean view, Spacious", image_path: "https://picsum.photos/400/300?random=105" }],
+    rooms: [{ id: 105, resort_id: 4, name: "Luxury Ocean", capacity: "4 Pax", features: "Ocean view, Spacious", image_path: "https://picsum.photos/400/300?random=105", more_images: ["https://picsum.photos/400/300?random=1051"] }],
     nearby_places: [
-        { id: 205, resort_id: 4, name: "Abai Village", category: PlaceCategory.TOUR, distance_text: "Car 10 min", description: "Historic village.", latitude: 38.2017, longitude: 128.5915, image_url: "https://picsum.photos/400/300?random=205" }
+        { id: 205, resort_id: 4, name: "Abai Village", category: PlaceCategory.TOUR, distance_text: "Car 10 min", description: "Historic village.", latitude: 38.2017, longitude: 128.5915, image_url: "https://picsum.photos/400/300?random=205", images: ["https://picsum.photos/400/300?random=205", "https://picsum.photos/400/300?random=255"] }
     ]
   },
   {
@@ -208,9 +229,9 @@ export const MOCK_RESORTS: Resort[] = [
     application_type: ApplicationType.LOTTERY,
     images: ["https://picsum.photos/600/400?random=51", "https://picsum.photos/600/400?random=52"],
     reviews: [{ id: 5, author: "Couple Park", rating: 4, comment: "Feels like Greece. Very romantic.", date: "2024-09-10" }],
-    rooms: [{ id: 106, resort_id: 5, name: "Suite Clean", capacity: "5 Pax", features: "Clean style, Ocean View", image_path: "https://picsum.photos/400/300?random=106" }],
+    rooms: [{ id: 106, resort_id: 5, name: "Suite Clean", capacity: "5 Pax", features: "Clean style, Ocean View", image_path: "https://picsum.photos/400/300?random=106", more_images: ["https://picsum.photos/400/300?random=1061"] }],
     nearby_places: [
-        { id: 206, resort_id: 5, name: "Chuam Candlestick Rock", category: PlaceCategory.TOUR, distance_text: "Walk 15 min", description: "Iconic sunrise spot.", latitude: 37.4782, longitude: 129.1587, image_url: "https://picsum.photos/400/300?random=206" }
+        { id: 206, resort_id: 5, name: "Chuam Candlestick Rock", category: PlaceCategory.TOUR, distance_text: "Walk 15 min", description: "Iconic sunrise spot.", latitude: 37.4782, longitude: 129.1587, image_url: "https://picsum.photos/400/300?random=206", images: ["https://picsum.photos/400/300?random=206", "https://picsum.photos/400/300?random=266"] }
     ]
   },
   {
@@ -250,7 +271,7 @@ export const MOCK_RESORTS: Resort[] = [
     reviews: [],
     rooms: [{ id: 108, resort_id: 7, name: "Family", capacity: "4 Pax", features: "Ocean View", image_path: "https://picsum.photos/400/300?random=108" }],
     nearby_places: [
-        { id: 207, resort_id: 7, name: "Windy Hill", category: PlaceCategory.TOUR, distance_text: "Car 30 min", description: "Scenic windmill.", latitude: 34.7570, longitude: 128.6720, image_url: "https://picsum.photos/400/300?random=207" }
+        { id: 207, resort_id: 7, name: "Windy Hill", category: PlaceCategory.TOUR, distance_text: "Car 30 min", description: "Scenic windmill.", latitude: 34.7570, longitude: 128.6720, image_url: "https://picsum.photos/400/300?random=207", images: ["https://picsum.photos/400/300?random=207", "https://picsum.photos/400/300?random=277"] }
     ]
   },
   {
@@ -271,7 +292,7 @@ export const MOCK_RESORTS: Resort[] = [
     reviews: [{ id: 7, author: "Hiker", rating: 5, comment: "Direct access to Olle trail #5.", date: "2024-04-12" }],
     rooms: [{ id: 109, resort_id: 8, name: "Suite Deluxe", capacity: "4 Pax", features: "Sea View", image_path: "https://picsum.photos/400/300?random=109" }],
     nearby_places: [
-         { id: 208, resort_id: 8, name: "Namwon Keuneong", category: PlaceCategory.TOUR, distance_text: "Walk 1 min", description: "Coastal walking path.", latitude: 33.2750, longitude: 126.7110, image_url: "https://picsum.photos/400/300?random=208" }
+         { id: 208, resort_id: 8, name: "Namwon Keuneong", category: PlaceCategory.TOUR, distance_text: "Walk 1 min", description: "Coastal walking path.", latitude: 33.2750, longitude: 126.7110, image_url: "https://picsum.photos/400/300?random=208", images: ["https://picsum.photos/400/300?random=208", "https://picsum.photos/400/300?random=288"] }
     ]
   },
   {
@@ -349,7 +370,7 @@ export const MOCK_RESORTS: Resort[] = [
     reviews: [{ id: 9, author: "Gourmet", rating: 4, comment: "Food in Yeosu is amazing.", date: "2024-10-10" }],
     rooms: [{ id: 113, resort_id: 12, name: "Superior", capacity: "2 Pax", features: "Ocean View", image_path: "https://picsum.photos/400/300?random=113" }],
     nearby_places: [
-         { id: 209, resort_id: 12, name: "Odongdo Island", category: PlaceCategory.TOUR, distance_text: "Walk 10 min", description: "Camellia flowers.", latitude: 34.7450, longitude: 127.7680, image_url: "https://picsum.photos/400/300?random=209" }
+         { id: 209, resort_id: 12, name: "Odongdo Island", category: PlaceCategory.TOUR, distance_text: "Walk 10 min", description: "Camellia flowers.", latitude: 34.7450, longitude: 127.7680, image_url: "https://picsum.photos/400/300?random=209", images: ["https://picsum.photos/400/300?random=209", "https://picsum.photos/400/300?random=299"] }
     ]
   },
   {
@@ -370,7 +391,198 @@ export const MOCK_RESORTS: Resort[] = [
     reviews: [{ id: 10, author: "Skier", rating: 5, comment: "Best ski resort near Seoul.", date: "2024-01-15" }],
     rooms: [{ id: 114, resort_id: 13, name: "Prime", capacity: "4 Pax", features: "Forest View", image_path: "https://picsum.photos/400/300?random=114" }],
     nearby_places: [
-        { id: 210, resort_id: 13, name: "Hwadam Botanic Garden", category: PlaceCategory.TOUR, distance_text: "On-site", description: "Beautiful arboretum.", latitude: 37.3370, longitude: 127.2950, image_url: "https://picsum.photos/400/300?random=210" }
+        { id: 210, resort_id: 13, name: "Hwadam Botanic Garden", category: PlaceCategory.TOUR, distance_text: "On-site", description: "Beautiful arboretum.", latitude: 37.3370, longitude: 127.2950, image_url: "https://picsum.photos/400/300?random=210", images: ["https://picsum.photos/400/300?random=210", "https://picsum.photos/400/300?random=211"] }
     ]
+  },
+  // --- New 10 Sample Data for Clustering Testing ---
+  {
+    id: 14,
+    name: "Kensington Seorak Beach",
+    brand: Brand.KENSINGTON,
+    region_depth1: Region.Gangwon,
+    region_depth2: "Goseong",
+    latitude: 38.2520,
+    longitude: 128.5580,
+    address: "40, Bondong-gil, Toseong-myeon, Goseong-gun, Gangwon-do",
+    check_in_out: "15:00 / 11:00",
+    contact: "1670-7464",
+    thumbnail_url: "https://picsum.photos/800/600?random=140",
+    facilities: ["Beach", "Cocomong Park"],
+    application_type: ApplicationType.FIRST_COME,
+    images: ["https://picsum.photos/600/400?random=141"],
+    reviews: [],
+    rooms: [{ id: 115, resort_id: 14, name: "Beach View", capacity: "4 Pax", features: "Private Beach View", image_path: "https://picsum.photos/400/300?random=115" }],
+    nearby_places: []
+  },
+  {
+    id: 15,
+    name: "Ocean to You Resort",
+    brand: Brand.Kumho, // Proxy
+    region_depth1: Region.Gangwon,
+    region_depth2: "Goseong",
+    latitude: 38.3188,
+    longitude: 128.5248,
+    address: "Sampo Beach, Goseong",
+    check_in_out: "15:00 / 11:00",
+    contact: "033-631-3811",
+    thumbnail_url: "https://picsum.photos/800/600?random=150",
+    facilities: ["BBQ", "Bike Rental"],
+    application_type: ApplicationType.FIRST_COME,
+    images: ["https://picsum.photos/600/400?random=151"],
+    reviews: [],
+    rooms: [{ id: 116, resort_id: 15, name: "Standard", capacity: "4 Pax", features: "Near Beach", image_path: "https://picsum.photos/400/300?random=116" }],
+    nearby_places: []
+  },
+  {
+    id: 16,
+    name: "Pine Ridge Resort",
+    brand: Brand.SONO, // Proxy
+    region_depth1: Region.Gangwon,
+    region_depth2: "Goseong",
+    latitude: 38.2320,
+    longitude: 128.4870,
+    address: "Toseong-myeon, Goseong",
+    check_in_out: "15:00 / 11:00",
+    contact: "033-630-6700",
+    thumbnail_url: "https://picsum.photos/800/600?random=160",
+    facilities: ["Golf", "Spa"],
+    application_type: ApplicationType.LOTTERY,
+    images: ["https://picsum.photos/600/400?random=161"],
+    reviews: [],
+    rooms: [{ id: 117, resort_id: 16, name: "Villa", capacity: "6 Pax", features: "Golf View", image_path: "https://picsum.photos/400/300?random=117" }],
+    nearby_places: []
+  },
+  {
+    id: 17,
+    name: "Phoenix Jeju",
+    brand: Brand.HANWHA, // Proxy
+    region_depth1: Region.Jeju,
+    region_depth2: "Seogwipo",
+    latitude: 33.4320,
+    longitude: 126.9280,
+    address: "Seopjikoji-ro, Seogwipo",
+    check_in_out: "14:00 / 11:00",
+    contact: "064-731-7000",
+    thumbnail_url: "https://picsum.photos/800/600?random=170",
+    facilities: ["Glass House", "Pool"],
+    application_type: ApplicationType.LOTTERY,
+    images: ["https://picsum.photos/600/400?random=171"],
+    reviews: [],
+    rooms: [{ id: 118, resort_id: 17, name: "Royal", capacity: "5 Pax", features: "Ocean View", image_path: "https://picsum.photos/400/300?random=118" }],
+    nearby_places: []
+  },
+  {
+    id: 18,
+    name: "Shilla Stay Haeundae",
+    brand: Brand.Lotte, // Proxy
+    region_depth1: Region.Gyeongsang,
+    region_depth2: "Busan",
+    latitude: 35.1590,
+    longitude: 129.1580,
+    address: "Haeundae-ro, Busan",
+    check_in_out: "15:00 / 12:00",
+    contact: "051-912-9000",
+    thumbnail_url: "https://picsum.photos/800/600?random=180",
+    facilities: ["Rooftop Pool", "Bar"],
+    application_type: ApplicationType.FIRST_COME,
+    images: ["https://picsum.photos/600/400?random=181"],
+    reviews: [],
+    rooms: [{ id: 119, resort_id: 18, name: "Standard", capacity: "2 Pax", features: "City View", image_path: "https://picsum.photos/400/300?random=119" }],
+    nearby_places: []
+  },
+  {
+    id: 19,
+    name: "Paradise Hotel Busan",
+    brand: Brand.Kumho, // Proxy
+    region_depth1: Region.Gyeongsang,
+    region_depth2: "Busan",
+    latitude: 35.1585,
+    longitude: 129.1620,
+    address: "Haeundae, Busan",
+    check_in_out: "15:00 / 11:00",
+    contact: "051-742-2121",
+    thumbnail_url: "https://picsum.photos/800/600?random=190",
+    facilities: ["Casino", "Cimer Spa"],
+    application_type: ApplicationType.LOTTERY,
+    images: ["https://picsum.photos/600/400?random=191"],
+    reviews: [],
+    rooms: [{ id: 120, resort_id: 19, name: "Deluxe", capacity: "3 Pax", features: "Ocean Terrace", image_path: "https://picsum.photos/400/300?random=120" }],
+    nearby_places: []
+  },
+  {
+    id: 20,
+    name: "Ananti Hilton Busan",
+    brand: Brand.HANWHA, // Proxy
+    region_depth1: Region.Gyeongsang,
+    region_depth2: "Busan",
+    latitude: 35.1970,
+    longitude: 129.2270,
+    address: "Gijang-eup, Busan",
+    check_in_out: "15:00 / 11:00",
+    contact: "051-509-1111",
+    thumbnail_url: "https://picsum.photos/800/600?random=200",
+    facilities: ["Infinity Pool", "Bookstore"],
+    application_type: ApplicationType.LOTTERY,
+    images: ["https://picsum.photos/600/400?random=201"],
+    reviews: [],
+    rooms: [{ id: 121, resort_id: 20, name: "Premium", capacity: "4 Pax", features: "Ocean View", image_path: "https://picsum.photos/400/300?random=121" }],
+    nearby_places: []
+  },
+  {
+    id: 21,
+    name: "Muju Deogyusan Resort",
+    brand: Brand.Kumho, // Proxy
+    region_depth1: Region.Jeolla,
+    region_depth2: "Muju",
+    latitude: 35.9920,
+    longitude: 127.7650,
+    address: "Seolcheon-myeon, Muju",
+    check_in_out: "15:00 / 11:00",
+    contact: "063-322-9000",
+    thumbnail_url: "https://picsum.photos/800/600?random=210",
+    facilities: ["Ski", "Golf"],
+    application_type: ApplicationType.FIRST_COME,
+    images: ["https://picsum.photos/600/400?random=211"],
+    reviews: [],
+    rooms: [{ id: 122, resort_id: 21, name: "Gold", capacity: "5 Pax", features: "Mountain View", image_path: "https://picsum.photos/400/300?random=122" }],
+    nearby_places: []
+  },
+  {
+    id: 22,
+    name: "Jindo Sol Beach",
+    brand: Brand.SONO,
+    region_depth1: Region.Jeolla,
+    region_depth2: "Jindo",
+    latitude: 34.3980,
+    longitude: 126.3150,
+    address: "Uisin-myeon, Jindo",
+    check_in_out: "15:00 / 11:00",
+    contact: "1588-4888",
+    thumbnail_url: "https://picsum.photos/800/600?random=220",
+    facilities: ["Infinity Pool", "Night View"],
+    application_type: ApplicationType.LOTTERY,
+    images: ["https://picsum.photos/600/400?random=221"],
+    reviews: [],
+    rooms: [{ id: 123, resort_id: 22, name: "Suite", capacity: "5 Pax", features: "Ocean View", image_path: "https://picsum.photos/400/300?random=123" }],
+    nearby_places: []
+  },
+  {
+    id: 23,
+    name: "Yeosu Venezia Hotel",
+    brand: Brand.HANWHA, // Proxy
+    region_depth1: Region.Jeolla,
+    region_depth2: "Yeosu",
+    latitude: 34.7430,
+    longitude: 127.7710,
+    address: "Sujeong-dong, Yeosu",
+    check_in_out: "15:00 / 11:00",
+    contact: "061-664-0001",
+    thumbnail_url: "https://picsum.photos/800/600?random=230",
+    facilities: ["Pool", "Cinema"],
+    application_type: ApplicationType.FIRST_COME,
+    images: ["https://picsum.photos/600/400?random=231"],
+    reviews: [],
+    rooms: [{ id: 124, resort_id: 23, name: "Standard", capacity: "2 Pax", features: "Harbor View", image_path: "https://picsum.photos/400/300?random=124" }],
+    nearby_places: []
   }
 ];
