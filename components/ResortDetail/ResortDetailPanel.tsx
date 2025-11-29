@@ -1,84 +1,147 @@
-import React, { useState, useEffect } from 'react';
-import { Resort, PlaceCategory, RoomType, NearbyPlace, ApplicationType, Review } from '../../types';
-import { IconArrowLeft, IconBed, IconUsers, IconUtensils, IconTent, IconShoppingBag, IconPhone, IconClock, IconMapPin, IconInfo, IconStar, IconCamera } from '../Icons';
+import React, { useState, useRef } from 'react';
+import { Resort, PlaceCategory, RoomType, NearbyPlace } from '../../types';
+import { useResortDetail, DetailTab } from '../../core/hooks/useResortDetail';
+import { IconArrowLeft, IconBed, IconUsers, IconUtensils, IconTent, IconShoppingBag, IconPhone, IconClock, IconMapPin, IconInfo, IconStar, IconCamera, IconX } from '../Icons';
 
 interface ResortDetailPanelProps {
   resort: Resort;
   onBack: () => void;
 }
 
-enum Tab {
-  OVERVIEW = 'Overview',
-  ROOMS = 'Rooms',
-  NEARBY = 'Nearby',
-}
-
-const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack }) => {
-  const [activeTab, setActiveTab] = useState<Tab>(Tab.OVERVIEW);
-  const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
-  const [selectedNearby, setSelectedNearby] = useState<NearbyPlace | null>(null);
+// --- Internal Component: Gallery Carousel ---
+const GalleryCarousel = ({ images, onImageClick }: { images?: string[], onImageClick: (img: string) => void }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
   
-  // Review State
-  const [localReviews, setLocalReviews] = useState<Review[]>([]);
-  const [reviewExpanded, setReviewExpanded] = useState(false);
-  const [newReviewRating, setNewReviewRating] = useState(5);
-  const [newReviewComment, setNewReviewComment] = useState("");
+  // Drag State
+  const [isDown, setIsDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const dragDistance = useRef(0); // Track how far we moved to distinguish click vs drag
 
-  useEffect(() => {
-      // Initialize with resort reviews when resort changes
-      setLocalReviews(resort.reviews || []);
-      setSelectedRoom(null);
-      setSelectedNearby(null);
-      setActiveTab(Tab.OVERVIEW);
-      setReviewExpanded(false);
-      setNewReviewComment("");
-      setNewReviewRating(5);
-  }, [resort]);
-
-  const handleSubmitReview = () => {
-      if(!newReviewComment.trim()) return;
-      
-      const newReview: Review = {
-          id: Date.now(),
-          author: "Guest (You)",
-          rating: newReviewRating,
-          comment: newReviewComment,
-          date: new Date().toISOString().split('T')[0]
-      };
-      
-      setLocalReviews([newReview, ...localReviews]);
-      setNewReviewComment("");
-      setReviewExpanded(true); // Show the new review
-  };
-
-  const getApplicationGuide = (type: ApplicationType) => {
-    switch (type) {
-      case ApplicationType.LOTTERY:
-        return { color: 'bg-purple-50 border-purple-200 text-purple-800', label: 'Lottery System', desc: 'Applications accepted 1 month prior. Selection by random draw.' };
-      case ApplicationType.FIRST_COME:
-        return { color: 'bg-blue-50 border-blue-200 text-blue-800', label: 'First-Come First-Served', desc: 'Direct booking available from the 1st of each month.' };
-      case ApplicationType.APPROVE:
-        return { color: 'bg-orange-50 border-orange-200 text-orange-800', label: 'Manager Approval', desc: 'Submit request. Approval required from department head.' };
-      default:
-        return { color: 'bg-slate-50 border-slate-200 text-slate-800', label: 'General', desc: 'Please contact HR for details.' };
+  const handleScroll = () => {
+    if (containerRef.current) {
+      const { scrollLeft, clientWidth } = containerRef.current;
+      const index = Math.round(scrollLeft / clientWidth);
+      setActiveIndex(index);
     }
   };
 
-  // --- SUB PAGES ---
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    setIsDown(true);
+    setStartX(e.pageX - containerRef.current.offsetLeft);
+    setScrollLeft(containerRef.current.scrollLeft);
+    dragDistance.current = 0; // Reset distance
+  };
+  
+  const handleMouseLeave = () => {
+    setIsDown(false);
+  };
+  
+  const handleMouseUp = (e: React.MouseEvent) => {
+    setIsDown(false);
+    // Logic handled in onClick of items usually, or here if we want to capture generic up
+  };
+  
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDown || !containerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll speed multiplier
+    containerRef.current.scrollLeft = scrollLeft - walk;
+    dragDistance.current += Math.abs(e.movementX);
+  };
+
+  const handleItemClick = (img: string) => {
+      // Only trigger if we haven't dragged much
+      if (dragDistance.current < 5) {
+          onImageClick(img);
+      }
+  };
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
+    e.currentTarget.className = "w-full h-full object-cover bg-slate-100 p-8 opacity-50";
+  };
+
+  if (!images || images.length === 0) return null;
+
+  return (
+    <div className="mb-6 select-none">
+       <h3 className="text-sm font-bold text-slate-800 mb-2 uppercase tracking-wide">Gallery</h3>
+       <div className="relative group">
+          <div 
+             ref={containerRef}
+             onScroll={handleScroll}
+             onMouseDown={handleMouseDown}
+             onMouseLeave={handleMouseLeave}
+             onMouseUp={handleMouseUp}
+             onMouseMove={handleMouseMove}
+             className={`flex overflow-x-auto rounded-xl [&::-webkit-scrollbar]:hidden ${
+                isDown ? 'cursor-grabbing snap-none' : 'cursor-grab snap-x snap-mandatory'
+             }`}
+             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+             {images.map((img, idx) => (
+                <div 
+                    key={idx} 
+                    className="w-full flex-shrink-0 snap-center"
+                    onClick={() => handleItemClick(img)}
+                >
+                   <img 
+                      src={img} 
+                      onError={handleImageError} 
+                      draggable={false}
+                      alt={`Gallery ${idx + 1}`} 
+                      className="w-full h-48 object-cover bg-slate-50 pointer-events-none" 
+                    />
+                </div>
+             ))}
+          </div>
+          {/* Dot Indicators */}
+          <div className="flex justify-center mt-3 space-x-1.5">
+             {images.map((_, idx) => (
+                <div 
+                   key={idx}
+                   className={`h-1.5 rounded-full transition-all duration-300 ${
+                      idx === activeIndex ? 'w-4 bg-teal-600' : 'w-1.5 bg-slate-300'
+                   }`}
+                />
+             ))}
+          </div>
+       </div>
+    </div>
+  );
+};
+
+const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack }) => {
+  const { state, actions, helpers } = useResortDetail(resort);
+  const { activeTab, selectedRoom, selectedNearby, localReviews, reviewExpanded, newReviewRating, newReviewComment, newReviewAuthor } = state;
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+
+  // Image Error Handler
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
+    e.currentTarget.className = e.currentTarget.className + " bg-slate-100 p-8 opacity-50";
+  };
+
+  // --- SUB COMPONENTS (Pure UI) ---
 
   const renderRoomDetail = (room: RoomType) => (
     <div className="bg-white h-full flex flex-col animate-fadeIn">
        <div className="flex items-center p-4 border-b border-slate-100 flex-shrink-0">
-          <button onClick={() => setSelectedRoom(null)} className="mr-3 p-2 hover:bg-slate-100 rounded-full text-slate-500">
+          <button onClick={() => actions.setSelectedRoom(null)} className="mr-3 p-2 hover:bg-slate-100 rounded-full text-slate-500">
             <IconArrowLeft className="w-5 h-5" />
           </button>
           <h3 className="font-bold text-slate-800">Room Details</h3>
        </div>
        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          <div className="rounded-xl overflow-hidden shadow-sm">
-             <img src={room.image_path} alt={room.name} className="w-full h-56 object-cover"/>
+          <div className="rounded-xl overflow-hidden shadow-sm cursor-zoom-in" onClick={() => setZoomedImage(room.image_path)}>
+             <img src={room.image_path} onError={handleImageError} alt={room.name} className="w-full h-56 object-cover"/>
           </div>
-          
           <div className="space-y-4">
               <div>
                   <h4 className="text-lg font-bold text-slate-900">{room.name}</h4>
@@ -87,31 +150,31 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack })
                       <span className="text-xs text-slate-500">{room.features}</span>
                   </div>
               </div>
-
-              <div className="text-sm text-slate-600 leading-relaxed">
-                  {room.description_long || "No detailed description available."}
-              </div>
-
+              <div className="text-sm text-slate-600 leading-relaxed whitespace-normal">{room.description_long || "No description."}</div>
               {room.amenities && (
                   <div>
                       <h5 className="font-bold text-slate-800 text-sm mb-2">Amenities</h5>
                       <div className="grid grid-cols-2 gap-2">
                           {room.amenities.map((item, i) => (
                               <div key={i} className="flex items-center text-xs text-slate-600">
-                                  <span className="w-1.5 h-1.5 bg-teal-500 rounded-full mr-2"></span>
-                                  {item}
+                                  <span className="w-1.5 h-1.5 bg-teal-500 rounded-full mr-2"></span>{item}
                               </div>
                           ))}
                       </div>
                   </div>
               )}
-
-              {room.more_images && room.more_images.length > 0 && (
+              {room.more_images && (
                   <div>
                       <h5 className="font-bold text-slate-800 text-sm mb-2">Gallery</h5>
                       <div className="grid grid-cols-2 gap-2">
                           {room.more_images.map((img, i) => (
-                              <img key={i} src={img} className="rounded-lg w-full h-24 object-cover" />
+                              <img 
+                                key={i} 
+                                src={img} 
+                                onError={handleImageError} 
+                                onClick={() => setZoomedImage(img)}
+                                className="rounded-lg w-full h-24 object-cover cursor-zoom-in hover:opacity-90 transition-opacity" 
+                              />
                           ))}
                       </div>
                   </div>
@@ -124,18 +187,17 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack })
   const renderNearbyDetail = (place: NearbyPlace) => (
       <div className="bg-white h-full flex flex-col animate-fadeIn">
         <div className="flex items-center p-4 border-b border-slate-100 flex-shrink-0">
-            <button onClick={() => setSelectedNearby(null)} className="mr-3 p-2 hover:bg-slate-100 rounded-full text-slate-500">
+            <button onClick={() => actions.setSelectedNearby(null)} className="mr-3 p-2 hover:bg-slate-100 rounded-full text-slate-500">
             <IconArrowLeft className="w-5 h-5" />
             </button>
             <h3 className="font-bold text-slate-800">Place Details</h3>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
             {place.image_url && (
-                <div className="rounded-xl overflow-hidden shadow-sm">
-                    <img src={place.image_url} alt={place.name} className="w-full h-48 object-cover"/>
+                <div className="rounded-xl overflow-hidden shadow-sm cursor-zoom-in" onClick={() => setZoomedImage(place.image_url!)}>
+                    <img src={place.image_url} onError={handleImageError} alt={place.name} className="w-full h-48 object-cover"/>
                 </div>
             )}
-            
             <div>
                 <div className="flex justify-between items-start">
                     <h4 className="text-xl font-bold text-slate-900">{place.name}</h4>
@@ -145,24 +207,23 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack })
                 </div>
                 <p className="text-sm text-slate-500 mt-1">{place.distance_text}</p>
             </div>
-
-            <div className="bg-slate-50 p-4 rounded-lg text-sm text-slate-700 leading-relaxed border border-slate-100">
+            <div className="bg-slate-50 p-4 rounded-lg text-sm text-slate-700 leading-relaxed border border-slate-100 whitespace-normal">
                 {place.detail_content || place.description}
             </div>
         </div>
       </div>
   );
 
-  // --- MAIN TABS ---
+  // --- TABS (Partial UI) ---
 
   const renderOverview = () => {
-    const guide = getApplicationGuide(resort.application_type);
+    const guide = helpers.getApplicationGuide(resort.application_type);
     const displayedReviews = reviewExpanded ? localReviews : localReviews.slice(0, 2);
 
     return (
-        <div className="space-y-6 animate-fadeIn pb-10">
+        <div className="space-y-6 animate-fadeIn pb-10 whitespace-normal">
             <div className="relative h-48 rounded-xl overflow-hidden shadow-sm mx-4 mt-4">
-                <img src={resort.thumbnail_url} alt={resort.name} className="w-full h-full object-cover" />
+                <img src={resort.thumbnail_url} onError={handleImageError} alt={resort.name} className="w-full h-full object-cover" />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                 <h2 className="text-xl font-bold text-white">{resort.name}</h2>
                 <p className="text-white/90 text-xs">{resort.address}</p>
@@ -170,7 +231,6 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack })
             </div>
 
             <div className="px-4">
-                {/* Application Guide Banner */}
                 <div className={`p-4 rounded-xl border mb-6 ${guide.color}`}>
                     <div className="flex items-center space-x-2 mb-1">
                         <IconInfo className="w-4 h-4" />
@@ -180,103 +240,100 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack })
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-slate-50 p-3 rounded-lg flex items-center space-x-2 border border-slate-100">
-                        <div className="p-1.5 bg-white rounded-full shadow-sm text-teal-600">
-                        <IconClock className="w-4 h-4" />
-                        </div>
+                    <div className="bg-slate-50 p-3 rounded-lg flex items-center space-x-3">
+                        <div className="p-2 bg-white rounded-full text-teal-600 shadow-sm"><IconClock className="w-4 h-4" /></div>
                         <div>
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Check In/Out</p>
-                        <p className="text-xs font-semibold text-slate-800">{resort.check_in_out}</p>
+                            <p className="text-[10px] text-slate-400 uppercase font-bold">Check In/Out</p>
+                            <p className="text-sm font-semibold text-slate-700">{resort.check_in_out}</p>
                         </div>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-lg flex items-center space-x-2 border border-slate-100">
-                        <div className="p-1.5 bg-white rounded-full shadow-sm text-teal-600">
-                        <IconPhone className="w-4 h-4" />
-                        </div>
+                    <div className="bg-slate-50 p-3 rounded-lg flex items-center space-x-3">
+                        <div className="p-2 bg-white rounded-full text-teal-600 shadow-sm"><IconPhone className="w-4 h-4" /></div>
                         <div>
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Contact</p>
-                        <p className="text-xs font-semibold text-slate-800">{resort.contact}</p>
+                            <p className="text-[10px] text-slate-400 uppercase font-bold">Contact</p>
+                            <p className="text-sm font-semibold text-slate-700">{resort.contact}</p>
                         </div>
                     </div>
                 </div>
 
                 <div className="mb-6">
                     <h3 className="text-sm font-bold text-slate-800 mb-2 uppercase tracking-wide">Facilities</h3>
-                    <div className="flex flex-wrap gap-1.5">
-                        {resort.facilities.map((facility, idx) => (
-                        <span key={idx} className="px-2.5 py-1 bg-teal-50 text-teal-700 text-xs rounded-full font-medium border border-teal-100">
-                            {facility}
-                        </span>
+                    <div className="flex flex-wrap gap-2">
+                        {resort.facilities.map((fac, i) => (
+                            <span key={i} className="px-3 py-1 bg-teal-50 text-teal-700 text-xs rounded-full font-medium border border-teal-100">{fac}</span>
                         ))}
                     </div>
                 </div>
 
-                {/* Reviews Section */}
+                {/* Gallery Carousel */}
+                <GalleryCarousel images={resort.images} onImageClick={setZoomedImage} />
+
+                {/* Reviews */}
                 <div>
-                    <div className="flex justify-between items-center mb-3">
+                    <div className="flex justify-between items-end mb-3">
                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Reviews ({localReviews.length})</h3>
                     </div>
                     
-                    {/* Review Form */}
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4">
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
                         <p className="text-xs font-bold text-slate-700 mb-2">Write a Review</p>
-                        <div className="flex space-x-1 mb-2">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <button key={star} onClick={() => setNewReviewRating(star)} type="button">
-                                    <IconStar 
-                                        filled={star <= newReviewRating} 
-                                        className={`w-5 h-5 ${star <= newReviewRating ? "text-yellow-400" : "text-slate-300"}`}
-                                    />
+                        <div className="flex space-x-1 mb-3">
+                             {[1, 2, 3, 4, 5].map((star) => (
+                                <button key={star} onClick={() => actions.setNewReviewRating(star)}>
+                                    <IconStar className="w-5 h-5 text-yellow-400" filled={star <= newReviewRating} />
                                 </button>
-                            ))}
+                             ))}
                         </div>
-                        <div className="flex gap-2">
-                            <input 
+                        <input 
+                           type="text" 
+                           placeholder="Your Name"
+                           className="w-full text-sm p-2 rounded-lg border border-slate-200 mb-2 focus:outline-none focus:border-teal-500"
+                           value={newReviewAuthor}
+                           onChange={(e) => actions.setNewReviewAuthor(e.target.value)}
+                        />
+                        <div className="flex space-x-2">
+                             <input 
                                 type="text" 
-                                value={newReviewComment}
-                                onChange={(e) => setNewReviewComment(e.target.value)}
                                 placeholder="Share your experience..." 
-                                className="flex-1 text-xs p-2 border border-slate-200 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                            <button 
-                                onClick={handleSubmitReview}
-                                disabled={!newReviewComment.trim()}
-                                className="bg-teal-600 text-white px-3 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
-                            >
-                                Post
-                            </button>
+                                className="flex-1 text-sm p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-teal-500"
+                                value={newReviewComment}
+                                onChange={(e) => actions.setNewReviewComment(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && actions.submitReview()}
+                             />
+                             <button 
+                                onClick={actions.submitReview}
+                                disabled={state.isSubmittingReview || !newReviewComment.trim()}
+                                className="bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                             >
+                                {state.isSubmittingReview ? '...' : 'Post'}
+                             </button>
                         </div>
                     </div>
 
-                    {/* Review List */}
                     <div className="space-y-3">
                         {displayedReviews.map((review) => (
-                            <div key={review.id} className="border-b border-slate-100 pb-3 last:border-0">
+                            <div key={review.id} className="bg-white border border-slate-100 p-3 rounded-xl shadow-sm">
                                 <div className="flex justify-between items-start mb-1">
-                                    <span className="text-xs font-bold text-slate-700">{review.author}</span>
+                                    <span className="font-bold text-slate-800 text-sm">{review.author}</span>
                                     <span className="text-[10px] text-slate-400">{review.date}</span>
                                 </div>
-                                <div className="flex text-yellow-400 mb-1">
+                                <div className="flex mb-1">
                                     {[...Array(5)].map((_, i) => (
-                                        <IconStar key={i} className="w-3 h-3" filled={i < review.rating} />
+                                        <IconStar key={i} className="w-3 h-3 text-yellow-400" filled={i < review.rating} />
                                     ))}
                                 </div>
                                 <p className="text-xs text-slate-600">{review.comment}</p>
                             </div>
                         ))}
-                        
-                        {!reviewExpanded && localReviews.length > 2 && (
-                            <button 
-                                onClick={() => setReviewExpanded(true)}
-                                className="w-full py-2 text-xs text-teal-600 font-medium hover:bg-teal-50 rounded-lg transition-colors"
-                            >
-                                Show All Reviews
-                            </button>
-                        )}
-                        {localReviews.length === 0 && (
-                            <p className="text-center text-xs text-slate-400 py-2">No reviews yet. Be the first!</p>
-                        )}
                     </div>
+                    
+                    {!reviewExpanded && localReviews.length > 2 && (
+                        <button 
+                           onClick={() => actions.setReviewExpanded(true)}
+                           className="w-full mt-3 py-2 text-xs text-slate-500 font-medium hover:text-teal-600 hover:bg-slate-50 rounded-lg transition-colors"
+                        >
+                           Show all reviews
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
@@ -284,31 +341,31 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack })
   };
 
   const renderRooms = () => (
-    <div className="space-y-4 animate-fadeIn p-4 pb-10">
+    <div className="space-y-3 p-4 animate-fadeIn pb-10">
       {resort.rooms.map((room) => (
         <div 
             key={room.id} 
-            onClick={() => setSelectedRoom(room)}
-            className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+            onClick={() => actions.setSelectedRoom(room)}
+            className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md hover:border-teal-200 transition-all cursor-pointer"
         >
           <div className="h-40 w-full overflow-hidden relative">
-            <img src={room.image_path} alt={room.name} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" />
-            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-            <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold text-slate-700 flex items-center">
-                 <IconCamera className="w-3 h-3 mr-1" /> View Details
+            <img src={room.image_path} onError={handleImageError} alt={room.name} className="w-full h-full object-cover" />
+            <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded-full flex items-center">
+                 <IconCamera className="w-3 h-3 mr-1" />
+                 More Info
             </div>
           </div>
           <div className="p-4">
             <div className="flex justify-between items-start mb-2">
-              <h4 className="text-sm font-bold text-slate-800">{room.name}</h4>
-              <div className="flex items-center space-x-1 text-slate-600 bg-slate-100 px-2 py-1 rounded text-[10px]">
+              <h4 className="font-bold text-slate-800">{room.name}</h4>
+              <div className="flex items-center space-x-1 text-slate-600 bg-slate-100 px-2 py-1 rounded text-[10px] font-bold">
                 <IconUsers className="w-3 h-3" />
                 <span>{room.capacity}</span>
               </div>
             </div>
             <div className="flex items-start space-x-2 text-slate-500 text-xs">
               <IconBed className="w-3 h-3 mt-0.5 flex-shrink-0" />
-              <span className="line-clamp-1">{room.features}</span>
+              <span>{room.features}</span>
             </div>
           </div>
         </div>
@@ -336,62 +393,71 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack })
     };
 
     return (
-      <div className="space-y-3 animate-fadeIn p-4 pb-10">
+      <div className="space-y-3 p-4 animate-fadeIn pb-10">
         {resort.nearby_places.map((place) => (
           <div 
             key={place.id} 
-            onClick={() => setSelectedNearby(place)}
-            className="flex bg-white p-3 rounded-xl border border-slate-100 shadow-sm items-start cursor-pointer hover:bg-slate-50 transition-colors"
+            onClick={() => actions.setSelectedNearby(place)}
+            className="flex bg-white p-3 rounded-xl border border-slate-100 shadow-sm items-start hover:border-teal-200 cursor-pointer transition-colors"
           >
             <div className={`p-2 rounded-lg ${getColor(place.category)} mr-3 flex-shrink-0`}>
               {getIcon(place.category)}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between">
-                <h4 className="font-bold text-sm text-slate-800 truncate">{place.name}</h4>
-                <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-full whitespace-nowrap ml-2">{place.distance_text}</span>
+                <h4 className="font-semibold text-slate-800 text-sm truncate">{place.name}</h4>
+                <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-full ml-2 whitespace-nowrap">{place.distance_text}</span>
               </div>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{place.description}</p>
+              <p className="text-xs text-slate-500 mt-1 truncate">{place.description}</p>
             </div>
           </div>
         ))}
-        {resort.nearby_places.length === 0 && (
-            <div className="text-center py-8 text-slate-400 text-sm">
-                No nearby information added by admin yet.
+        {(!resort.nearby_places || resort.nearby_places.length === 0) && (
+            <div className="text-center py-8 text-slate-400 text-xs">
+                No nearby information added yet.
             </div>
         )}
       </div>
     );
   };
 
-  // --- RENDER CONTROL ---
-
+  // Main Render Logic
   if (selectedRoom) return renderRoomDetail(selectedRoom);
   if (selectedNearby) return renderNearbyDetail(selectedNearby);
 
   return (
-    <div className="flex flex-col h-full bg-white animate-fadeIn">
+    <div className="h-full flex flex-col bg-white">
+      {/* Lightbox Overlay */}
+      {zoomedImage && (
+        <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 animate-fadeIn" onClick={() => setZoomedImage(null)}>
+           <button onClick={() => setZoomedImage(null)} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
+              <IconX className="w-8 h-8" />
+           </button>
+           <img src={zoomedImage} alt="Zoomed" className="max-w-full max-h-full object-contain rounded shadow-2xl" />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-center p-4 border-b border-slate-100 flex-shrink-0 bg-white z-10">
-        <button onClick={onBack} className="mr-2 p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
-            <IconArrowLeft className="w-5 h-5" />
+      <div className="flex items-center p-4 border-b border-slate-100 flex-shrink-0">
+        <button onClick={onBack} className="mr-3 p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+          <IconArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-slate-800 truncate">{resort.name}</h2>
-            <p className="text-xs text-slate-500 truncate">{resort.region_depth1} {resort.region_depth2}</p>
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-slate-800 truncate leading-tight">{resort.name}</h2>
+          <p className="text-xs text-slate-500 truncate">{resort.region_depth1} {resort.region_depth2}</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-100 bg-slate-50/50 flex-shrink-0">
-        {Object.values(Tab).map((tab) => (
+      <div className="flex border-b border-slate-100 flex-shrink-0">
+        {Object.values(DetailTab).map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
+            onClick={() => actions.setActiveTab(tab)}
+            className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 relative ${
               activeTab === tab
-                ? 'border-teal-600 text-teal-700 bg-white'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                ? 'border-teal-600 text-teal-700'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
             }`}
           >
             {tab}
@@ -399,11 +465,11 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack })
         ))}
       </div>
 
-      {/* Content */}
+      {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto bg-white">
-        {activeTab === Tab.OVERVIEW && renderOverview()}
-        {activeTab === Tab.ROOMS && renderRooms()}
-        {activeTab === Tab.NEARBY && renderNearby()}
+        {activeTab === DetailTab.OVERVIEW && renderOverview()}
+        {activeTab === DetailTab.ROOMS && renderRooms()}
+        {activeTab === DetailTab.NEARBY && renderNearby()}
       </div>
     </div>
   );

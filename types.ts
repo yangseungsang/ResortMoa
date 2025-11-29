@@ -79,6 +79,7 @@ export interface Resort {
   nearby_places: NearbyPlace[];
   application_type: ApplicationType;
   reviews: Review[];
+  images?: string[]; // Gallery images
 }
 
 export interface FilterState {
