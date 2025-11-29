@@ -1,4 +1,4 @@
-# Resort Moa - API Interface Documentation (v1.0)
+# Resort Moa - API Interface Documentation (v1.1)
 
 This document defines the RESTful API contract for the **Resort Moa** application.
 It serves as a standard for communication between the React Frontend and the Python FastAPI Backend.
@@ -62,6 +62,10 @@ Retrieve detailed information for a specific resort, including rooms, nearby pla
     "check_in_out": "15:00 / 11:00",
     "contact": "1588-4888",
     "thumbnail_url": "/static/images/resort_1.jpg",
+    "images": [
+       "/static/images/gallery_1.jpg",
+       "/static/images/gallery_2.jpg"
+    ],
     "facilities": ["Infinity Pool", "Sauna"],
     "application_type": "LOTTERY",
     "rooms": [
@@ -86,7 +90,15 @@ Retrieve detailed information for a specific resort, including rooms, nearby pla
         "latitude": 38.1190,
         "longitude": 128.4650,
         "image_url": "/static/images/place_201.jpg",
-        "detail_content": "Full detail text..."
+        "images": [
+            "/static/images/place_201_1.jpg",
+            "/static/images/place_201_2.jpg"
+        ],
+        "detail_content": "Full detail text...",
+        "info_attributes": [
+            { "label": "Operating Hours", "value": "09:00 - 18:00" },
+            { "label": "Parking", "value": "Available" }
+        ]
       }
     ],
     "reviews": [

@@ -182,7 +182,7 @@ const MainPage: React.FC = () => {
                 
                 {/* Status Bar */}
                 <div className="p-3 border-t border-slate-100 bg-slate-50 text-xs text-center text-slate-400 flex-shrink-0">
-                {totalCount} Resorts Available
+                  Made by Resort Moa Team
                 </div>
             </>
             )}

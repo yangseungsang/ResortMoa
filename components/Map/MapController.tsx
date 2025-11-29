@@ -1,8 +1,9 @@
+
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { Resort, PlaceCategory } from '../../types';
 import { safeLatLng } from '../../core/utils/mapUtils';
-import { IconHome } from '../Icons';
+import { IconHome, IconPlus, IconMinus } from '../Icons';
 
 // No external CDN imports needed for markers anymore.
 
@@ -113,7 +114,7 @@ const MapController: React.FC<MapControllerProps> = ({ resorts, selectedResort, 
 
     try {
         const map = L.map(mapContainerRef.current, {
-            zoomControl: false,
+            zoomControl: false, // Disable default zoom control to use custom buttons
             maxBounds: KOREA_BOUNDS,
             maxBoundsViscosity: 1.0,
             minZoom: 6,
@@ -128,7 +129,6 @@ const MapController: React.FC<MapControllerProps> = ({ resorts, selectedResort, 
           maxZoom: 19
         }).addTo(map);
 
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
         mapInstanceRef.current = map;
     } catch (error) {
         console.error("Error initializing map:", error);
@@ -277,18 +277,53 @@ const MapController: React.FC<MapControllerProps> = ({ resorts, selectedResort, 
     }
   };
 
+  const handleZoomIn = () => {
+      if (mapInstanceRef.current) {
+          mapInstanceRef.current.zoomIn();
+      }
+  };
+
+  const handleZoomOut = () => {
+      if (mapInstanceRef.current) {
+          mapInstanceRef.current.zoomOut();
+      }
+  };
+
   return (
     <div className="relative w-full h-full z-0">
       <div ref={mapContainerRef} className="w-full h-full bg-slate-200" />
       
-      {/* Reset View Button */}
-      <button 
-        onClick={handleResetView}
-        className="absolute bottom-24 right-2.5 z-[400] bg-white w-[30px] h-[30px] flex items-center justify-center rounded border-2 border-slate-300 text-slate-600 hover:bg-slate-50 shadow-sm cursor-pointer"
-        title="Reset View"
-      >
-        <IconHome className="w-4 h-4" />
-      </button>
+      {/* Map Controls Container - Right Aligned Stack */}
+      <div className="absolute bottom-6 right-4 z-[400] flex flex-col items-center space-y-3">
+          
+          {/* Reset View Button */}
+          <button 
+            onClick={handleResetView}
+            className="bg-white w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:text-teal-600 hover:bg-slate-50 shadow-md transition-colors cursor-pointer"
+            title="Reset View"
+          >
+            <IconHome className="w-5 h-5" />
+          </button>
+
+          {/* Zoom Controls Group */}
+          <div className="flex flex-col rounded-lg shadow-md border border-slate-200 overflow-hidden bg-white">
+            <button 
+                onClick={handleZoomIn} 
+                className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-600 border-b border-slate-100 transition-colors"
+                title="Zoom In"
+            >
+                <IconPlus className="w-5 h-5" />
+            </button>
+            <button 
+                onClick={handleZoomOut} 
+                className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-600 transition-colors"
+                title="Zoom Out"
+            >
+                <IconMinus className="w-5 h-5" />
+            </button>
+          </div>
+
+      </div>
 
       <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-2 rounded text-[10px] text-slate-500 z-[400] pointer-events-none shadow-sm">
         OpenStreetMap {selectedResort ? '• Nearby Places Active' : ''}
