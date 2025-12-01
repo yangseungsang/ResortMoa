@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Resort, FilterState } from '../../types';
 import { getResorts } from '../../services/resortService';
@@ -36,6 +37,7 @@ export const useResorts = () => {
       setResorts(data);
     } catch (error) {
       console.error("Failed to load resorts", error);
+      setResorts([]); // Clear data on error (Strict Server Mode)
     } finally {
       setLoading(false);
     }

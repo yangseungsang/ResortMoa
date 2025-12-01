@@ -1,4 +1,5 @@
-# Resort Moa - API Interface Documentation (v1.1)
+
+# Resort Moa - API Interface Documentation (v1.3)
 
 This document defines the RESTful API contract for the **Resort Moa** application.
 It serves as a standard for communication between the React Frontend and the Python FastAPI Backend.
@@ -35,7 +36,12 @@ Retrieve a list of all resorts. Supports filtering via query parameters.
       "contact": "1588-4888",
       "thumbnail_url": "/static/images/resort_1.jpg",
       "facilities": ["Infinity Pool", "Sauna"],
-      "application_type": "LOTTERY"
+      "booking_rule": {
+          "name": "[SONO] Application Period",
+          "description": "Full text details...",
+          "badge_text": "Lottery: 1st-10th",
+          "ui_theme": { "bg": "bg-purple-50", "text": "text-purple-700", "border": "border-purple-200", "icon_color": "text-purple-600" }
+      }
     },
     ...
   ]
@@ -54,8 +60,8 @@ Retrieve detailed information for a specific resort, including rooms, nearby pla
     "id": 1,
     "name": "Sono Felice Delpino",
     "brand": "SONO",
-    "region_depth1": "Gangwon",
-    "region_depth2": "Goseong",
+    "region_depth1": "강원",
+    "region_depth2": "고성",
     "latitude": 38.2039,
     "longitude": 128.5133,
     "address": "1153 Misiryeong-yetgil...",
@@ -67,7 +73,12 @@ Retrieve detailed information for a specific resort, including rooms, nearby pla
        "/static/images/gallery_2.jpg"
     ],
     "facilities": ["Infinity Pool", "Sauna"],
-    "application_type": "LOTTERY",
+    "booking_rule": {
+          "name": "[SONO] Application Period",
+          "description": "Full text details...",
+          "badge_text": "Lottery: 1st-10th",
+          "ui_theme": { "bg": "bg-purple-50", "text": "text-purple-700", "border": "border-purple-200", "icon_color": "text-purple-600" }
+    },
     "rooms": [
       {
         "id": 101,
@@ -152,36 +163,67 @@ Submit a new review for a resort.
 
 ---
 
-## 3. Data Enumerations (Enums)
+## 3. Resources: Guide
 
-### 3.1. Brand
-- `SONO`
-- `HANWHA`
-- `KENSINGTON`
-- `LOTTE`
-- `KUMHO`
+### 3.1. Get Application Guide
+Retrieve the dynamic application guide content (e.g., Criteria, Rules, Restrictions).
 
-### 3.2. Region (region_depth1)
-- `Gangwon`
-- `Jeju`
-- `Gyeongsang`
-- `Jeolla`
-- `Chungcheong`
-- `Gyeonggi`
-
-### 3.3. Place Category
-- `TOUR` (Tourist Attraction)
-- `FOOD` (Restaurant/Cafe)
-- `STORE` (Convenience/Market)
-
-### 3.4. Application Type
-- `LOTTERY` (Random Draw)
-- `FIRST_COME` (First come, first served)
-- `APPROVE` (Manager Approval)
+- **Endpoint:** `GET /guide`
+- **Response (200 OK):**
+  ```json
+  [
+    {
+      "id": 1,
+      "title": "Support Criteria",
+      "content": "Employees with 3+ years of tenure...",
+      "details": ["Full-time employees only", "Probation period excluded"],
+      "category": "CRITERIA"
+    },
+    {
+      "id": 2,
+      "title": "Usage Rules",
+      "content": "Please follow the resort policies...",
+      "details": ["No pets allowed", "Check-in at 3 PM"],
+      "category": "RULES"
+    }
+  ]
+  ```
+  - **Available Categories:** `CRITERIA`, `RULES`, `RESTRICTION`, `CONTACT`, `ETC`
 
 ---
 
-## 4. Static Files
+## 4. Resources: Regions & Brands
+
+### 4.1. Get Region List
+Retrieve the list of available regions for filtering.
+
+- **Endpoint:** `GET /regions`
+- **Response (200 OK):**
+  ```json
+  ["Gangwon", "Jeju", "Gyeongsang", "Jeolla", "Chungcheong", "Gyeonggi"]
+  ```
+
+### 4.2. Get Brand List
+Retrieve the list of available brands for filtering.
+
+- **Endpoint:** `GET /brands`
+- **Response (200 OK):**
+  ```json
+  ["SONO", "HANWHA", "KENSINGTON", "LOTTE", "KUMHO"]
+  ```
+
+---
+
+## 5. Data Enumerations (Enums)
+
+### 5.1. Place Category
+- `여행` (Tourist Attraction)
+- `음식` (Restaurant/Cafe)
+- `식료품` (Convenience/Market)
+
+---
+
+## 6. Static Files
 Images are served directly from the backend's static directory.
 - **Path:** `/static/images/{filename}`
 - **Example:** `http://api-server.com/static/images/resort_thumbnail_01.jpg`

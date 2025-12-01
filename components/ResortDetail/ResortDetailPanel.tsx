@@ -10,9 +10,11 @@ import { RoomsTab, NearbyTab } from './tabs/DetailTabs';
 interface ResortDetailPanelProps {
   resort: Resort;
   onBack: () => void;
+  onMoveToLocation?: () => void;
+  onFlyToLocation?: (lat: number, lng: number) => void;
 }
 
-const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack }) => {
+const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack, onMoveToLocation, onFlyToLocation }) => {
   const detailHook = useResortDetail(resort);
   const { state, actions } = detailHook;
   const { activeTab, selectedRoom, selectedNearby } = state;
@@ -33,7 +35,11 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack })
         <button onClick={onBack} className="mr-3 p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
           <IconArrowLeft className="w-5 h-5" />
         </button>
-        <div className="min-w-0">
+        <div 
+            className="min-w-0 flex-1 cursor-pointer hover:opacity-70 transition-opacity" 
+            onClick={onMoveToLocation}
+            title="Move map to resort"
+        >
           <h2 className="text-lg font-bold text-slate-800 truncate leading-tight">{resort.name}</h2>
           <p className="text-xs text-slate-500 truncate">{resort.region_depth1} {resort.region_depth2}</p>
         </div>
@@ -65,7 +71,15 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack })
             <RoomsTab rooms={resort.rooms} onSelect={actions.setSelectedRoom} />
         )}
         {activeTab === DetailTab.NEARBY && (
-            <NearbyTab places={resort.nearby_places} onSelect={actions.setSelectedNearby} />
+            <NearbyTab 
+                places={resort.nearby_places} 
+                onSelect={(place) => {
+                    actions.setSelectedNearby(place);
+                    if (onFlyToLocation && place.latitude && place.longitude) {
+                        onFlyToLocation(place.latitude, place.longitude);
+                    }
+                }} 
+            />
         )}
       </div>
     </div>

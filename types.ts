@@ -1,5 +1,6 @@
 
 // Enums for filtering
+// Deprecated: Brands are now fetched dynamically from server.
 export enum Brand {
   SONO = 'SONO',
   HANWHA = 'HANWHA',
@@ -8,6 +9,8 @@ export enum Brand {
   Kumho = 'KUMHO',
 }
 
+// Deprecated: Regions are now fetched dynamically from server.
+// Keeping this for reference if needed, but not used for filtering.
 export enum Region {
   Gangwon = 'Gangwon',
   Jeju = 'Jeju',
@@ -49,6 +52,7 @@ export interface NearbyPlace {
   longitude?: number;
   image_url?: string;
   images?: string[]; // Multiple images for slider
+  more_images?: string[]; // Additional images from server
   detail_content?: string; // HTML or text for detail view
   info_attributes?: { label: string; value: string; }[]; // Dynamic Key-Value pairs for extra info
 }
@@ -65,11 +69,31 @@ export interface RoomType {
   more_images?: string[];
 }
 
+export interface BookingRule {
+  name: string;          // e.g. "Lottery System"
+  description: string;   // Full combined description (Generic + Brand specific)
+  badge_text: string;    // Short text for list view (e.g. "Lottery: 1st-10th")
+  ui_theme: {            // Visual style
+      bg: string;
+      text: string;
+      border: string;
+      icon_color: string;
+  };
+}
+
+export interface GuideSection {
+  id: number;
+  title: string;      // e.g. "Support Criteria"
+  content: string;    // Main description
+  details?: string[]; // Bullet points
+  category: 'CRITERIA' | 'RULES' | 'RESTRICTION' | 'CONTACT' | 'ETC';
+}
+
 export interface Resort {
   id: number;
   name: string;
-  brand: Brand;
-  region_depth1: Region;
+  brand: string; // Changed from Brand enum to string for dynamic support
+  region_depth1: string; // Changed from Region enum to string for dynamic support
   region_depth2: string;
   latitude: number;
   longitude: number;
@@ -80,13 +104,13 @@ export interface Resort {
   facilities: string[]; 
   rooms: RoomType[];
   nearby_places: NearbyPlace[];
-  application_type: ApplicationType;
   reviews: Review[];
   images?: string[]; // Gallery images
+  booking_rule?: BookingRule; // Unified booking rule object
 }
 
 export interface FilterState {
   searchQuery: string;
-  selectedRegion: Region | 'ALL';
-  selectedBrand: Brand | 'ALL';
+  selectedRegion: string; // Changed from Region | 'ALL' to string
+  selectedBrand: string; // Changed from Brand | 'ALL' to string
 }

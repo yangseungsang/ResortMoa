@@ -13,14 +13,14 @@ export const RoomDetailView: React.FC<RoomDetailViewProps> = ({ room, onBack }) 
   const roomImages = [room.image_path, ...(room.more_images || [])];
   
   return (
-    <div className="bg-white h-full flex flex-col animate-fadeIn">
+    <div className="bg-white h-full flex flex-col animate-fadeIn whitespace-normal">
        <div className="flex items-center p-4 border-b border-slate-100 flex-shrink-0">
           <button onClick={onBack} className="mr-3 p-2 hover:bg-slate-100 rounded-full text-slate-500">
             <IconArrowLeft className="w-5 h-5" />
           </button>
           <h3 className="font-bold text-slate-800">Room Details</h3>
        </div>
-       <div className="flex-1 overflow-y-auto p-4 space-y-6">
+       <div className="flex-1 overflow-y-auto p-4 space-y-6 min-h-0">
           <div className="rounded-xl overflow-hidden shadow-sm">
              <GalleryCarousel images={roomImages} showTitle={false} heightClass="h-64" />
           </div>
@@ -32,7 +32,7 @@ export const RoomDetailView: React.FC<RoomDetailViewProps> = ({ room, onBack }) 
                       <span className="text-xs text-slate-500">{room.features}</span>
                   </div>
               </div>
-              <div className="text-sm text-slate-600 leading-relaxed whitespace-normal">{room.description_long || "No description."}</div>
+              <div className="text-sm text-slate-600 leading-relaxed">{room.description_long || "No description."}</div>
               {room.amenities && (
                   <div>
                       <h5 className="font-bold text-slate-800 text-sm mb-2">Amenities</h5>
@@ -57,19 +57,25 @@ interface NearbyDetailViewProps {
 }
 
 export const NearbyDetailView: React.FC<NearbyDetailViewProps> = ({ place, onBack }) => {
-  const placeImages = place.images && place.images.length > 0 
-      ? place.images 
-      : (place.image_url ? [place.image_url] : []);
+  // Combine all image sources: thumbnail, existing images list, and new more_images list
+  const rawImages = [
+      place.image_url,
+      ...(place.images || []),
+      ...(place.more_images || [])
+  ].filter((img): img is string => !!img);
+
+  // Remove duplicates to be safe (e.g. if image_url is also in images array)
+  const placeImages = Array.from(new Set(rawImages));
 
   return (
-      <div className="bg-white h-full flex flex-col animate-fadeIn">
+      <div className="bg-white h-full flex flex-col animate-fadeIn whitespace-normal">
         <div className="flex items-center p-4 border-b border-slate-100 flex-shrink-0">
             <button onClick={onBack} className="mr-3 p-2 hover:bg-slate-100 rounded-full text-slate-500">
             <IconArrowLeft className="w-5 h-5" />
             </button>
             <h3 className="font-bold text-slate-800">Place Details</h3>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 space-y-5 min-h-0">
             {placeImages.length > 0 && (
                 <div className="rounded-xl overflow-hidden shadow-sm">
                      <GalleryCarousel images={placeImages} showTitle={false} heightClass="h-56" />
@@ -82,7 +88,6 @@ export const NearbyDetailView: React.FC<NearbyDetailViewProps> = ({ place, onBac
                         {place.category}
                     </span>
                 </div>
-                <p className="text-sm text-slate-500 mt-1">{place.distance_text}</p>
             </div>
             
             {/* Dynamic Info Attributes */}
@@ -99,7 +104,7 @@ export const NearbyDetailView: React.FC<NearbyDetailViewProps> = ({ place, onBac
                 </div>
             )}
 
-            <div className="bg-white p-2 text-sm text-slate-700 leading-relaxed whitespace-normal">
+            <div className="bg-white p-2 text-sm text-slate-700 leading-relaxed">
                 <h5 className="font-bold text-slate-900 text-sm mb-1">About</h5>
                 {place.detail_content || place.description}
             </div>

@@ -1,0 +1,189 @@
+import React, { useState, useEffect, useRef } from 'react';
+
+interface MobileBottomSheetProps {
+  children: React.ReactNode;
+  isVisible: boolean;
+  onClose: () => void;
+}
+
+const MIN_HEIGHT_PERCENT = 40; // Default peek height
+const MAX_HEIGHT_PERCENT = 100; // Full expansion height
+const CLOSE_THRESHOLD = 25; // Threshold to close the sheet
+const SNAP_THRESHOLD = 75; // Threshold to snap to max height
+
+export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, isVisible, onClose }) => {
+  const [height, setHeight] = useState(MIN_HEIGHT_PERCENT);
+  const [isDragging, setIsDragging] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  
+  // Refs for drag calculation
+  const startY = useRef<number>(0);
+  const startHeight = useRef<number>(0);
+  const isAtTop = useRef<boolean>(true); // Track if content is scrolled to top
+  
+  // Ref to track current height for event listeners
+  const heightRef = useRef(height);
+  useEffect(() => { heightRef.current = height; }, [height]);
+
+  useEffect(() => {
+    if (isVisible) {
+      setHeight(MIN_HEIGHT_PERCENT);
+    }
+  }, [isVisible]);
+
+  // Determine if expanded (allow scrolling) or collapsed (drag only)
+  // Use a slight buffer (e.g., 98%) to ensure it feels fully expanded
+  const isExpanded = height >= 98;
+  
+  // Determine if maximized to hide handle
+  const isMaximized = height >= 100;
+
+  // --- Touch Handlers (Mobile) ---
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Check scroll position at start of drag
+    if (contentRef.current && isExpanded) {
+        isAtTop.current = contentRef.current.scrollTop <= 0;
+    } else {
+        isAtTop.current = true;
+    }
+
+    setIsDragging(true);
+    startY.current = e.touches[0].clientY;
+    startHeight.current = sheetRef.current ? sheetRef.current.clientHeight : 0;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = startY.current - currentY; // Positive = Drag Up, Negative = Drag Down
+
+    // Smart Drag Logic:
+    // 1. If fully expanded and dragging UP, allow content scroll (ignore sheet resize)
+    if (isExpanded && deltaY > 0) {
+        return;
+    }
+    // 2. If fully expanded and dragging DOWN, only resize sheet if we are at the top of content
+    if (isExpanded && deltaY < 0 && !isAtTop.current) {
+        return;
+    }
+
+    // Otherwise, resize the sheet
+    const windowHeight = window.innerHeight;
+    const newHeightPx = startHeight.current + deltaY;
+    const newHeightPercent = (newHeightPx / windowHeight) * 100;
+
+    if (newHeightPercent > 10 && newHeightPercent <= 100) {
+        setHeight(newHeightPercent);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    snapToPosition(height);
+  };
+
+  // --- Mouse Handlers (Desktop Testing) ---
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (contentRef.current && isExpanded) {
+        isAtTop.current = contentRef.current.scrollTop <= 0;
+    } else {
+        isAtTop.current = true;
+    }
+    
+    setIsDragging(true);
+    startY.current = e.clientY;
+    startHeight.current = sheetRef.current ? sheetRef.current.clientHeight : 0;
+    
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+  };
+
+  const handleGlobalMouseMove = useRef((e: MouseEvent) => {
+    const currentY = e.clientY;
+    const deltaY = startY.current - currentY;
+    
+    const isExpandedRef = heightRef.current >= 98;
+
+    if (isExpandedRef && deltaY > 0) return;
+    if (isExpandedRef && deltaY < 0 && !isAtTop.current) return;
+
+    const windowHeight = window.innerHeight;
+    const newHeightPx = startHeight.current + deltaY;
+    const newHeightPercent = (newHeightPx / windowHeight) * 100;
+
+    if (newHeightPercent > 10 && newHeightPercent <= 100) {
+        setHeight(newHeightPercent);
+    }
+  }).current;
+
+  const handleGlobalMouseUp = useRef(() => {
+    setIsDragging(false);
+    document.removeEventListener('mousemove', handleGlobalMouseMove);
+    document.removeEventListener('mouseup', handleGlobalMouseUp);
+    snapToPosition(heightRef.current);
+  }).current;
+
+  // Common Snap Logic
+  const snapToPosition = (currentHeight: number) => {
+    if (currentHeight < CLOSE_THRESHOLD) {
+      onClose();
+    } else if (currentHeight > SNAP_THRESHOLD) {
+      setHeight(MAX_HEIGHT_PERCENT);
+    } else {
+      setHeight(MIN_HEIGHT_PERCENT);
+    }
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed inset-0 z-[500] pointer-events-none md:hidden flex flex-col justify-end">
+      {/* Backdrop */}
+      <div 
+         className={`
+            absolute inset-0 bg-black/30 transition-opacity duration-300
+            ${height > SNAP_THRESHOLD ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+         `}
+         onClick={onClose}
+      />
+
+      {/* Sheet Container */}
+      <div
+        ref={sheetRef}
+        className={`
+            w-full bg-white shadow-[0_-5px_20px_rgba(0,0,0,0.15)] relative flex flex-col pointer-events-auto
+            ${isMaximized ? 'rounded-none' : 'rounded-t-2xl'}
+        `}
+        style={{ 
+            height: `${height}%`,
+            transition: isDragging ? 'none' : 'height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' 
+        }}
+        // Handlers attached to the container to allow dragging anywhere
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+      >
+        {/* Drag Handle Visual */}
+        <div 
+            className={`
+                w-full flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing bg-slate-50 border-b border-slate-100 
+                transition-all duration-300 ease-in-out overflow-hidden
+                ${isMaximized ? 'h-0 opacity-0 border-none' : 'h-8 opacity-100 rounded-t-2xl'}
+            `}
+        >
+            <div className="w-12 h-1.5 bg-slate-300 rounded-full" />
+        </div>
+
+        {/* Content */}
+        <div 
+            ref={contentRef}
+            className={`flex-1 relative bg-white ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'}`}
+        >
+            {children}
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -11,7 +11,7 @@ interface RoomsTabProps {
 
 export const RoomsTab: React.FC<RoomsTabProps> = ({ rooms, onSelect }) => (
   <div className="space-y-3 p-4 animate-fadeIn pb-10">
-    {rooms.map((room) => (
+    {(rooms || []).map((room) => (
       <div 
           key={room.id} 
           onClick={() => onSelect(room)}
@@ -39,6 +39,11 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ rooms, onSelect }) => (
         </div>
       </div>
     ))}
+    {(!rooms || rooms.length === 0) && (
+        <div className="text-center py-8 text-slate-400 text-xs">
+            No room information available.
+        </div>
+    )}
   </div>
 );
 
@@ -68,7 +73,7 @@ export const NearbyTab: React.FC<NearbyTabProps> = ({ places, onSelect }) => {
   
       return (
         <div className="space-y-3 p-4 animate-fadeIn pb-10">
-          {places.map((place) => (
+          {(places || []).map((place) => (
             <div 
               key={place.id} 
               onClick={() => onSelect(place)}
@@ -80,7 +85,6 @@ export const NearbyTab: React.FC<NearbyTabProps> = ({ places, onSelect }) => {
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between">
                   <h4 className="font-semibold text-slate-800 text-sm truncate">{place.name}</h4>
-                  <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-full ml-2 whitespace-nowrap">{place.distance_text}</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1 truncate">{place.description}</p>
               </div>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Resort, PlaceCategory } from '../../types';
 import { IconX, IconBed, IconUsers, IconUtensils, IconTent, IconShoppingBag, IconPhone, IconClock, IconMapPin } from '../Icons';
@@ -114,7 +115,6 @@ const DetailModal: React.FC<DetailModalProps> = ({ resort, onClose }) => {
             <div className="flex-1">
               <div className="flex justify-between">
                 <h4 className="font-semibold text-slate-800">{place.name}</h4>
-                <span className="text-xs font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-full">{place.distance_text}</span>
               </div>
               <p className="text-sm text-slate-600 mt-1">{place.description}</p>
             </div>

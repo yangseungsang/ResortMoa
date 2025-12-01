@@ -1,11 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Resort, Region, Brand } from '../types';
 import { useResorts } from '../core/hooks/useResorts';
-import MapController from '../components/Map/MapController';
+import { getResortById, getRegions, getBrands } from '../services/resortService';
+import MapController, { MapControllerHandle } from '../components/Map/MapController';
 import ResortDetailPanel from '../components/ResortDetail/ResortDetailPanel';
 import ApplicationGuide from '../components/Guide/ApplicationGuide';
-import { IconSearch, IconMapPin, IconChevronLeft, IconMenu, IconBookOpen } from '../components/Icons';
+import { MobileBottomSheet } from '../components/Layout/MobileBottomSheet';
+import { IconSearch, IconMapPin, IconChevronLeft, IconMenu, IconBookOpen, IconCalendar, IconList, IconMap, IconX } from '../components/Icons';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 
 const MainPage: React.FC = () => {
@@ -13,15 +15,63 @@ const MainPage: React.FC = () => {
   const [selectedResort, setSelectedResort] = useState<Resort | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [isMobileListOpen, setIsMobileListOpen] = useState(false);
+  const [regionOptions, setRegionOptions] = useState<string[]>([]);
+  const [brandOptions, setBrandOptions] = useState<string[]>([]);
+  const mapRef = useRef<MapControllerHandle>(null);
+
+  // Fetch Options on Mount
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [regions, brands] = await Promise.all([getRegions(), getBrands()]);
+        setRegionOptions(regions);
+        setBrandOptions(brands);
+      } catch (error) {
+        console.error("Failed to load options", error);
+      }
+    };
+    fetchOptions();
+  }, []);
 
   const handleBackToList = () => {
       setSelectedResort(null);
   };
 
-  const handleResortSelect = (resort: Resort) => {
+  const handleResortSelect = async (resort: Resort) => {
+    // 1. Optimistic Update: Show summary data immediately
     setSelectedResort(resort);
     setShowGuide(false);
+    setIsMobileListOpen(false); // Close mobile list view if open
     setIsSidebarCollapsed(false); // Auto-open sidebar on selection
+    
+    // Auto-move map to selected resort
+    if (mapRef.current) {
+        mapRef.current.flyToLocation(resort.latitude, resort.longitude);
+    }
+
+    // 2. Fetch Full Details: Get complete data (nearby_places, etc.) from server
+    try {
+        const fullData = await getResortById(resort.id);
+        if (fullData) {
+            setSelectedResort(fullData);
+        }
+    } catch (error) {
+        console.error("Failed to fetch resort details", error);
+        // Keep showing summary data if fetch fails
+    }
+  };
+
+  const handleMoveToLocation = () => {
+      if (selectedResort && mapRef.current) {
+          mapRef.current.flyToLocation(selectedResort.latitude, selectedResort.longitude);
+      }
+  };
+
+  const handleFlyToCoords = (lat: number, lng: number) => {
+      if (mapRef.current) {
+          mapRef.current.flyToLocation(lat, lng);
+      }
   };
 
   const toggleGuide = () => {
@@ -47,9 +97,10 @@ const MainPage: React.FC = () => {
       <div 
         className={`
             flex flex-col bg-white border-r border-slate-200 shadow-xl z-30 
-            transition-all duration-300 ease-in-out h-full overflow-hidden
-            absolute md:relative top-0 left-0
-            ${isSidebarCollapsed ? 'w-0 -translate-x-full md:translate-x-0 md:w-0 border-none' : 'w-full md:w-96 translate-x-0'}
+            transition-all duration-300 ease-in-out h-full overflow-hidden relative
+            md:relative md:flex
+            ${isSidebarCollapsed ? 'md:w-0 md:border-none' : 'md:w-96'}
+            ${isMobileListOpen ? 'fixed inset-0 z-[600] w-full' : 'hidden'}
         `}
       >
         {/* Sidebar Content */}
@@ -58,7 +109,9 @@ const MainPage: React.FC = () => {
             {selectedResort ? (
                 <ResortDetailPanel 
                     resort={selectedResort} 
-                    onBack={handleBackToList} 
+                    onBack={handleBackToList}
+                    onMoveToLocation={handleMoveToLocation}
+                    onFlyToLocation={handleFlyToCoords}
                 />
             ) : showGuide ? (
                 <ApplicationGuide onBack={() => setShowGuide(false)} />
@@ -84,10 +137,19 @@ const MainPage: React.FC = () => {
                             <IconBookOpen className="w-5 h-5" />
                         </button>
                         
-                        {/* Close Sidebar Button (Visible on all screens inside sidebar) */}
+                        {/* Mobile: Close List Button */}
+                        <button 
+                            onClick={() => setIsMobileListOpen(false)}
+                            className="md:hidden p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                            title="Back to Map"
+                        >
+                            <IconX className="w-6 h-6" />
+                        </button>
+
+                        {/* Close Sidebar Button (Desktop) */}
                         <button 
                             onClick={() => setIsSidebarCollapsed(true)}
-                            className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                            className="hidden md:flex p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
                             title="Close Sidebar"
                         >
                             <IconChevronLeft className="w-5 h-5" />
@@ -119,7 +181,7 @@ const MainPage: React.FC = () => {
                         onChange={(e) => updateFilter('selectedRegion', e.target.value)}
                     >
                         <option value="ALL">All Regions</option>
-                        {Object.values(Region).map(r => <option key={r} value={r}>{r}</option>)}
+                        {regionOptions.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                     </div>
 
@@ -132,14 +194,14 @@ const MainPage: React.FC = () => {
                         onChange={(e) => updateFilter('selectedBrand', e.target.value)}
                     >
                         <option value="ALL">All Brands</option>
-                        {Object.values(Brand).map(b => <option key={b} value={b}>{b}</option>)}
+                        {brandOptions.map(b => <option key={b} value={b}>{b}</option>)}
                     </select>
                     </div>
                 </div>
                 </div>
 
                 {/* Results List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20 md:pb-4">
                 {loading ? (
                     <div className="flex justify-center py-10">
                         <div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
@@ -149,40 +211,62 @@ const MainPage: React.FC = () => {
                         No resorts found matching your criteria.
                     </div>
                 ) : (
-                    resorts.map(resort => (
-                    <div
-                        key={resort.id}
-                        onClick={() => handleResortSelect(resort)}
-                        className="group p-3 rounded-xl border bg-white border-slate-100 hover:border-teal-200 hover:shadow-sm transition-all cursor-pointer flex items-start space-x-3"
-                    >
-                        <ImageWithFallback 
-                            src={resort.thumbnail_url} 
-                            alt={resort.name} 
-                            className="w-16 h-16 rounded-lg object-cover bg-slate-200 flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0 whitespace-normal">
-                        <div className="flex justify-between items-start">
-                            <h3 className="font-bold text-slate-800 text-sm truncate group-hover:text-teal-700 transition-colors">{resort.name}</h3>
-                            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded ml-2">{resort.brand}</span>
+                    resorts.map(resort => {
+                        const rule = resort.booking_rule;
+                        return (
+                        <div
+                            key={resort.id}
+                            onClick={() => handleResortSelect(resort)}
+                            className="group rounded-xl border bg-white border-slate-100 hover:border-teal-200 hover:shadow-md transition-all cursor-pointer flex flex-col overflow-hidden"
+                        >
+                            <ImageWithFallback 
+                                src={resort.thumbnail_url} 
+                                alt={resort.name} 
+                                className="w-full h-40 object-cover bg-slate-200"
+                            />
+                            <div className="p-4 w-full">
+                                <div className="flex justify-between items-start">
+                                    <h3 className="font-bold text-slate-800 text-base truncate group-hover:text-teal-700 transition-colors">{resort.name}</h3>
+                                    <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded ml-2 flex-shrink-0">{resort.brand}</span>
+                                </div>
+                                <div className="flex items-center mt-2 text-slate-500 text-sm">
+                                    <IconMapPin className="w-3.5 h-3.5 mr-1" />
+                                    <span className="truncate">{resort.region_depth1} {resort.region_depth2}</span>
+                                </div>
+                                
+                                {/* Brand Booking Info Badge (Using Unified Rule) */}
+                                {rule && (
+                                    <div className={`mt-3 flex items-center px-2 py-1.5 rounded border ${rule.ui_theme.bg} ${rule.ui_theme.border}`}>
+                                        <IconCalendar className={`w-3 h-3 mr-1.5 ${rule.ui_theme.icon_color}`} />
+                                        <span className={`text-[10px] font-bold ${rule.ui_theme.text}`}>{rule.badge_text}</span>
+                                    </div>
+                                )}
+
+                                <div className="mt-3 flex flex-wrap gap-1.5">
+                                    {(resort.facilities || []).slice(0, 3).map((fac, i) => (
+                                        <span key={i} className="text-[10px] px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-100">{fac}</span>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center mt-1 text-slate-500 text-xs">
-                            <IconMapPin className="w-3 h-3 mr-1" />
-                            <span className="truncate">{resort.region_depth1} {resort.region_depth2}</span>
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                            {resort.facilities.slice(0, 2).map((fac, i) => (
-                                <span key={i} className="text-[10px] px-1.5 py-0.5 bg-slate-50 text-slate-500 rounded border border-slate-100">{fac}</span>
-                            ))}
-                        </div>
-                        </div>
-                    </div>
-                    ))
+                    )})
                 )}
                 </div>
                 
                 {/* Status Bar */}
-                <div className="p-3 border-t border-slate-100 bg-slate-50 text-xs text-center text-slate-400 flex-shrink-0">
+                <div className="p-3 border-t border-slate-100 bg-slate-50 text-xs text-center text-slate-400 flex-shrink-0 hidden md:block">
                   Made by Resort Moa Team
+                </div>
+
+                {/* Mobile Floating Button inside List View to close it */}
+                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[400] md:hidden">
+                    <button
+                        onClick={() => setIsMobileListOpen(false)}
+                        className="bg-slate-800 text-white px-5 py-2.5 rounded-full shadow-lg font-semibold text-sm flex items-center space-x-2 active:scale-95 transition-transform"
+                    >
+                        <IconMap className="w-4 h-4" />
+                        <span>Map View</span>
+                    </button>
                 </div>
             </>
             )}
@@ -191,13 +275,13 @@ const MainPage: React.FC = () => {
 
       {/* Map Area */}
       <div className="flex-1 relative h-full">
-        {/* Mobile/Desktop Sidebar Toggle Button - Floating on Map */}
+        {/* Mobile/Desktop Sidebar Toggle Button (Only visible on Desktop when sidebar is closed) */}
         <button 
             onClick={() => setIsSidebarCollapsed(false)}
             className={`
-                absolute top-4 left-4 z-20 
+                hidden md:flex absolute top-4 left-4 z-20 
                 w-10 h-10 bg-white border border-slate-200 rounded-full shadow-md 
-                flex items-center justify-center text-slate-600 hover:text-teal-600 
+                items-center justify-center text-slate-600 hover:text-teal-600 
                 transition-all duration-300 active:scale-95
                 ${!isSidebarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'} 
             `}
@@ -207,10 +291,46 @@ const MainPage: React.FC = () => {
         </button>
 
         <MapController 
+            ref={mapRef}
             resorts={resorts} 
             selectedResort={selectedResort}
             onResortSelect={handleResortSelect} 
         />
+
+        {/* MOBILE Bottom Sheet for Resort Detail ONLY */}
+        <MobileBottomSheet 
+            isVisible={!!selectedResort} 
+            onClose={() => setSelectedResort(null)}
+        >
+            {selectedResort && (
+                <ResortDetailPanel 
+                    resort={selectedResort} 
+                    onBack={() => setSelectedResort(null)}
+                    onMoveToLocation={handleMoveToLocation}
+                    onFlyToLocation={handleFlyToCoords}
+                />
+            )}
+        </MobileBottomSheet>
+
+        {/* MOBILE Full Page Guide Overlay */}
+        {showGuide && (
+            <div className="fixed inset-0 z-[500] bg-white md:hidden flex flex-col animate-fadeIn">
+                <ApplicationGuide onBack={() => setShowGuide(false)} />
+            </div>
+        )}
+
+        {/* MOBILE: List Toggle Button (Bottom Center) - Only visible when no resort selected */}
+        {!selectedResort && !showGuide && (
+            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[400] md:hidden">
+                <button
+                    onClick={() => setIsMobileListOpen(true)}
+                    className="bg-white text-slate-800 px-5 py-2.5 rounded-full shadow-lg font-semibold text-sm flex items-center space-x-2 border border-slate-100 active:scale-95 transition-transform"
+                >
+                    <IconList className="w-4 h-4" />
+                    <span>List View</span>
+                </button>
+            </div>
+        )}
       </div>
 
     </div>

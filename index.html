@@ -9,7 +9,7 @@
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
     <style>
-      /* Custom scrollbar for webkit */
+      /* Custom scrollbar for webkit - Default for app */
       ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -24,11 +24,47 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8; 
       }
+
+      /* Utility to strictly hide scrollbars (for popups) */
+      .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+      }
+      .scrollbar-hide {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+      }
+
       /* Leaflet specific fix */
       .leaflet-container {
         width: 100%;
         height: 100%;
         background-color: #e2e8f0; /* Map background color */
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+      
+      /* Customize Leaflet Popup to allow full-width headers */
+      .leaflet-popup-content-wrapper {
+        padding: 0 !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      }
+      .leaflet-popup-content {
+        margin: 0 !important;
+        width: 100% !important;
+        line-height: 1.5;
+      }
+      
+      /* Style for popups with dark headers (make close button white) */
+      .popup-dark-header .leaflet-popup-close-button {
+        color: white !important;
+        top: 8px !important;
+        right: 8px !important;
+        font-size: 18px !important;
+      }
+      .popup-dark-header .leaflet-popup-close-button:hover {
+        color: #e2e8f0 !important;
+        background: transparent !important;
       }
       
       /* Animations */

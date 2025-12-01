@@ -12,10 +12,12 @@ interface OverviewTabProps {
 }
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({ resort, hookData }) => {
-  const { state, actions, helpers } = hookData;
+  const { state, actions } = hookData;
   const { localReviews, reviewExpanded, newReviewRating, newReviewComment, newReviewAuthor } = state;
-  const guide = helpers.getApplicationGuide(resort.application_type);
   const displayedReviews = reviewExpanded ? localReviews : localReviews.slice(0, 2);
+  
+  // Use unified booking rule object
+  const rule = resort.booking_rule;
 
   return (
     <div className="space-y-6 animate-fadeIn pb-10 whitespace-normal">
@@ -28,14 +30,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ resort, hookData }) =>
         </div>
 
         <div className="px-4">
-            {/* Guide Card */}
-            <div className={`p-4 rounded-xl border mb-6 ${guide.color}`}>
-                <div className="flex items-center space-x-2 mb-1">
-                    <IconInfo className="w-4 h-4" />
-                    <span className="font-bold text-sm uppercase tracking-wide">{guide.label}</span>
+            {/* Guide Card (Using Unified Booking Rule) */}
+            {rule && (
+                <div className={`p-4 rounded-xl border mb-6 ${rule.ui_theme.bg} ${rule.ui_theme.border}`}>
+                    <div className="flex items-center space-x-2 mb-2">
+                        <IconInfo className={`w-4 h-4 ${rule.ui_theme.icon_color}`} />
+                        <span className={`font-bold text-sm uppercase tracking-wide ${rule.ui_theme.text}`}>{rule.name}</span>
+                    </div>
+                    {/* Render newlines in description */}
+                    <div className={`text-xs opacity-90 leading-relaxed whitespace-pre-line ${rule.ui_theme.text}`}>
+                        {rule.description}
+                    </div>
                 </div>
-                <p className="text-xs opacity-90">{guide.desc}</p>
-            </div>
+            )}
 
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-3 mb-6">
@@ -59,7 +66,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ resort, hookData }) =>
             <div className="mb-6">
                 <h3 className="text-sm font-bold text-slate-800 mb-2 uppercase tracking-wide">Facilities</h3>
                 <div className="flex flex-wrap gap-2">
-                    {resort.facilities.map((fac, i) => (
+                    {(resort.facilities || []).map((fac, i) => (
                         <span key={i} className="px-3 py-1 bg-teal-50 text-teal-700 text-xs rounded-full font-medium border border-teal-100">{fac}</span>
                     ))}
                 </div>

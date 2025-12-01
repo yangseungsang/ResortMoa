@@ -1,7 +1,14 @@
 
 import { Resort, Brand, Region, PlaceCategory, ApplicationType } from '../types';
+import { generateBookingRule } from '../core/utils/brandRules';
 
-export const MOCK_RESORTS: Resort[] = [
+// Define a raw type that includes application_type for internal generation logic
+interface RawResortData extends Omit<Resort, 'booking_rule'> {
+    application_type: ApplicationType;
+    booking_rule?: undefined; 
+}
+
+const RAW_RESORTS: RawResortData[] = [
   {
     id: 1,
     name: "Sono Felice Delpino",
@@ -251,7 +258,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=61", "https://picsum.photos/600/400?random=62"],
     reviews: [{ id: 6, author: "User 123", rating: 3, comment: "Facility is a bit old, but Waterpia is great.", date: "2024-05-05" }],
     rooms: [{ id: 107, resort_id: 6, name: "Royal", capacity: "7 Pax", features: "Classic European Style", image_path: "https://picsum.photos/400/300?random=107" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 211, resort_id: 6, name: "Seorak Waterpia", category: PlaceCategory.TOUR, distance_text: "On-site", description: "Natural hot spring water park.", latitude: 38.2105, longitude: 128.5275, image_url: "https://picsum.photos/400/300?random=211" }
+    ]
   },
   {
     id: 7,
@@ -312,7 +321,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=91", "https://picsum.photos/600/400?random=92"],
     reviews: [],
     rooms: [{ id: 110, resort_id: 9, name: "Deluxe Garden", capacity: "2 Pax", features: "Garden View", image_path: "https://picsum.photos/400/300?random=110" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 212, resort_id: 9, name: "Jungmun Beach", category: PlaceCategory.TOUR, distance_text: "Walk 10 min", description: "Surfing spot.", latitude: 33.2440, longitude: 126.4120, image_url: "https://picsum.photos/400/300?random=212" }
+    ]
   },
   {
     id: 10,
@@ -331,7 +342,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=101"],
     reviews: [{ id: 8, author: "Wellness Seeker", rating: 5, comment: "Best spa experience in the forest.", date: "2024-11-01" }],
     rooms: [{ id: 111, resort_id: 10, name: "Villa", capacity: "5 Pax", features: "Private Villa", image_path: "https://picsum.photos/400/300?random=111" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 213, resort_id: 10, name: "Bakdaljae", category: PlaceCategory.TOUR, distance_text: "Car 15 min", description: "Historic mountain pass.", latitude: 37.1250, longitude: 128.0100, image_url: "https://picsum.photos/400/300?random=213" }
+    ]
   },
   {
     id: 11,
@@ -350,7 +363,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=112"],
     reviews: [],
     rooms: [{ id: 112, resort_id: 11, name: "Tower Suite", capacity: "4 Pax", features: "City View", image_path: "https://picsum.photos/400/300?random=112" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 214, resort_id: 11, name: "Independence Hall", category: PlaceCategory.TOUR, distance_text: "Car 5 min", description: "Korean history museum.", latitude: 36.7830, longitude: 127.2230, image_url: "https://picsum.photos/400/300?random=214" }
+    ]
   },
   {
     id: 12,
@@ -394,7 +409,6 @@ export const MOCK_RESORTS: Resort[] = [
         { id: 210, resort_id: 13, name: "Hwadam Botanic Garden", category: PlaceCategory.TOUR, distance_text: "On-site", description: "Beautiful arboretum.", latitude: 37.3370, longitude: 127.2950, image_url: "https://picsum.photos/400/300?random=210", images: ["https://picsum.photos/400/300?random=210", "https://picsum.photos/400/300?random=211"] }
     ]
   },
-  // --- New 10 Sample Data for Clustering Testing ---
   {
     id: 14,
     name: "Kensington Seorak Beach",
@@ -412,7 +426,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=141"],
     reviews: [],
     rooms: [{ id: 115, resort_id: 14, name: "Beach View", capacity: "4 Pax", features: "Private Beach View", image_path: "https://picsum.photos/400/300?random=115" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 215, resort_id: 14, name: "Bongpo Beach", category: PlaceCategory.TOUR, distance_text: "Walk 1 min", description: "Clear water beach.", latitude: 38.2540, longitude: 128.5600, image_url: "https://picsum.photos/400/300?random=215" }
+    ]
   },
   {
     id: 15,
@@ -431,7 +447,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=151"],
     reviews: [],
     rooms: [{ id: 116, resort_id: 15, name: "Standard", capacity: "4 Pax", features: "Near Beach", image_path: "https://picsum.photos/400/300?random=116" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 216, resort_id: 15, name: "Sampo Beach", category: PlaceCategory.TOUR, distance_text: "Walk 2 min", description: "Quiet beach.", latitude: 38.3195, longitude: 128.5260, image_url: "https://picsum.photos/400/300?random=216" }
+    ]
   },
   {
     id: 16,
@@ -450,7 +468,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=161"],
     reviews: [],
     rooms: [{ id: 117, resort_id: 16, name: "Villa", capacity: "6 Pax", features: "Golf View", image_path: "https://picsum.photos/400/300?random=117" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 217, resort_id: 16, name: "Pine Ridge Golf Club", category: PlaceCategory.TOUR, distance_text: "On-site", description: "Famous golf course.", latitude: 38.2330, longitude: 128.4880, image_url: "https://picsum.photos/400/300?random=217" }
+    ]
   },
   {
     id: 17,
@@ -469,7 +489,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=171"],
     reviews: [],
     rooms: [{ id: 118, resort_id: 17, name: "Royal", capacity: "5 Pax", features: "Ocean View", image_path: "https://picsum.photos/400/300?random=118" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 218, resort_id: 17, name: "Seopjikoji", category: PlaceCategory.TOUR, distance_text: "Walk 5 min", description: "Scenic coast.", latitude: 33.4280, longitude: 126.9300, image_url: "https://picsum.photos/400/300?random=218" }
+    ]
   },
   {
     id: 18,
@@ -488,7 +510,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=181"],
     reviews: [],
     rooms: [{ id: 119, resort_id: 18, name: "Standard", capacity: "2 Pax", features: "City View", image_path: "https://picsum.photos/400/300?random=119" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 219, resort_id: 18, name: "Busan Aquarium", category: PlaceCategory.TOUR, distance_text: "Walk 2 min", description: "Sea life.", latitude: 35.1595, longitude: 129.1590, image_url: "https://picsum.photos/400/300?random=219" }
+    ]
   },
   {
     id: 19,
@@ -507,7 +531,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=191"],
     reviews: [],
     rooms: [{ id: 120, resort_id: 19, name: "Deluxe", capacity: "3 Pax", features: "Ocean Terrace", image_path: "https://picsum.photos/400/300?random=120" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 220, resort_id: 19, name: "Dalmaji Hill", category: PlaceCategory.TOUR, distance_text: "Car 10 min", description: "Moon watching spot.", latitude: 35.1550, longitude: 129.1750, image_url: "https://picsum.photos/400/300?random=220" }
+    ]
   },
   {
     id: 20,
@@ -526,7 +552,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=201"],
     reviews: [],
     rooms: [{ id: 121, resort_id: 20, name: "Premium", capacity: "4 Pax", features: "Ocean View", image_path: "https://picsum.photos/400/300?random=121" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 221, resort_id: 20, name: "Haedong Yonggungsa", category: PlaceCategory.TOUR, distance_text: "Car 5 min", description: "Temple by the sea.", latitude: 35.1900, longitude: 129.2230, image_url: "https://picsum.photos/400/300?random=221" }
+    ]
   },
   {
     id: 21,
@@ -545,7 +573,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=211"],
     reviews: [],
     rooms: [{ id: 122, resort_id: 21, name: "Gold", capacity: "5 Pax", features: "Mountain View", image_path: "https://picsum.photos/400/300?random=122" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 222, resort_id: 21, name: "Deogyusan National Park", category: PlaceCategory.TOUR, distance_text: "On-site", description: "Winter hiking.", latitude: 35.9800, longitude: 127.7600, image_url: "https://picsum.photos/400/300?random=222" }
+    ]
   },
   {
     id: 22,
@@ -564,7 +594,9 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=221"],
     reviews: [],
     rooms: [{ id: 123, resort_id: 22, name: "Suite", capacity: "5 Pax", features: "Ocean View", image_path: "https://picsum.photos/400/300?random=123" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 223, resort_id: 22, name: "Miracle Sea Road", category: PlaceCategory.TOUR, distance_text: "Car 15 min", description: "Famous sea parting.", latitude: 34.4200, longitude: 126.3500, image_url: "https://picsum.photos/400/300?random=223" }
+    ]
   },
   {
     id: 23,
@@ -583,6 +615,18 @@ export const MOCK_RESORTS: Resort[] = [
     images: ["https://picsum.photos/600/400?random=231"],
     reviews: [],
     rooms: [{ id: 124, resort_id: 23, name: "Standard", capacity: "2 Pax", features: "Harbor View", image_path: "https://picsum.photos/400/300?random=124" }],
-    nearby_places: []
+    nearby_places: [
+        { id: 224, resort_id: 23, name: "Yeosu Cable Car", category: PlaceCategory.TOUR, distance_text: "Walk 10 min", description: "Scenic ride.", latitude: 34.7460, longitude: 127.7730, image_url: "https://picsum.photos/400/300?random=224" }
+    ]
   }
 ];
+
+// Enrich the mock data to simulate the server response structure for 'booking_rule'
+export const MOCK_RESORTS: Resort[] = RAW_RESORTS.map(resort => {
+    // Extract application_type for generation, then return clean Resort object
+    const { application_type, ...resortData } = resort;
+    return {
+        ...resortData,
+        booking_rule: generateBookingRule(resort.brand, application_type)
+    };
+});
