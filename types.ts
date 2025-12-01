@@ -9,17 +9,6 @@ export enum Brand {
   Kumho = 'KUMHO',
 }
 
-// Deprecated: Regions are now fetched dynamically from server.
-// Keeping this for reference if needed, but not used for filtering.
-export enum Region {
-  Gangwon = 'Gangwon',
-  Jeju = 'Jeju',
-  Gyeongsang = 'Gyeongsang',
-  Jeolla = 'Jeolla',
-  Chungcheong = 'Chungcheong',
-  Gyeonggi = 'Gyeonggi',
-}
-
 export enum PlaceCategory {
   TOUR = 'TOUR',
   FOOD = 'FOOD',

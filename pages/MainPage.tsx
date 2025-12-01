@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Resort, Region, Brand } from '../types';
+import { Resort } from '../types';
 import { useResorts } from '../core/hooks/useResorts';
 import { getResortById, getRegions, getBrands } from '../services/resortService';
 import MapController, { MapControllerHandle } from '../components/Map/MapController';

@@ -151,14 +151,15 @@ const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ res
          const targetZoom = 15;
          let targetCenter = latLng;
 
-         // Mobile Adjustment: Account for Bottom Sheet (~40% height)
-         // We want the pin to appear in the top ~60% of the screen.
+         // Mobile Adjustment: Account for Bottom Sheet (~60% height)
+         // We want the pin to appear in the top ~40% of the screen.
          // By shifting the map center DOWN (positive Y), the pin moves UP relative to the viewport.
          if (window.innerWidth < 768) {
             const mapSize = map.getSize();
-            // Shift center down by 20% of screen height. 
-            // Screen center is 50%, Visible center is ~30%. Diff is 20%.
-            const offsetY = mapSize.y * 0.20; 
+            // Shift center down by 25% of screen height to place pin in the visible top area.
+            // Screen center is 50%, Visible center (of top 40%) is 20%. Diff is 30%.
+            // We use 0.25 (25%) to provide a little headroom.
+            const offsetY = mapSize.y * 0.25; 
 
             // Project to pixel coordinates at target zoom
             const point = map.project(latLng, targetZoom);

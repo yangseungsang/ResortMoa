@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 
 interface MobileBottomSheetProps {
@@ -6,13 +7,14 @@ interface MobileBottomSheetProps {
   onClose: () => void;
 }
 
-const MIN_HEIGHT_PERCENT = 40; // Default peek height
-const MAX_HEIGHT_PERCENT = 100; // Full expansion height
-const CLOSE_THRESHOLD = 25; // Threshold to close the sheet
-const SNAP_THRESHOLD = 75; // Threshold to snap to max height
+// Snap Points Configuration
+const SNAP_TOP = 100;
+const SNAP_MIDDLE = 60; // "Above Middle"
+const SNAP_BOTTOM = 35; // "Bottom" / Peek (Default)
+const CLOSE_THRESHOLD = 15; // Drag below this to close
 
 export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, isVisible, onClose }) => {
-  const [height, setHeight] = useState(MIN_HEIGHT_PERCENT);
+  const [height, setHeight] = useState(SNAP_BOTTOM);
   const [isDragging, setIsDragging] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -28,13 +30,13 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
 
   useEffect(() => {
     if (isVisible) {
-      setHeight(MIN_HEIGHT_PERCENT);
+      setHeight(SNAP_BOTTOM); // Default to Bottom position on open
     }
   }, [isVisible]);
 
   // Determine if expanded (allow scrolling) or collapsed (drag only)
   // Use a slight buffer (e.g., 98%) to ensure it feels fully expanded
-  const isExpanded = height >= 98;
+  const isExpanded = height >= (SNAP_TOP - 2);
   
   // Determine if maximized to hide handle
   const isMaximized = height >= 100;
@@ -103,7 +105,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
     const currentY = e.clientY;
     const deltaY = startY.current - currentY;
     
-    const isExpandedRef = heightRef.current >= 98;
+    const isExpandedRef = heightRef.current >= (SNAP_TOP - 2);
 
     if (isExpandedRef && deltaY > 0) return;
     if (isExpandedRef && deltaY < 0 && !isAtTop.current) return;
@@ -124,14 +126,26 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
     snapToPosition(heightRef.current);
   }).current;
 
-  // Common Snap Logic
+  // 3-Stage Snap Logic
   const snapToPosition = (currentHeight: number) => {
     if (currentHeight < CLOSE_THRESHOLD) {
       onClose();
-    } else if (currentHeight > SNAP_THRESHOLD) {
-      setHeight(MAX_HEIGHT_PERCENT);
+      return;
+    }
+    
+    // Calculate distances to snap points
+    const distTop = Math.abs(currentHeight - SNAP_TOP);
+    const distMiddle = Math.abs(currentHeight - SNAP_MIDDLE);
+    const distBottom = Math.abs(currentHeight - SNAP_BOTTOM);
+    
+    const min = Math.min(distTop, distMiddle, distBottom);
+    
+    if (min === distTop) {
+        setHeight(SNAP_TOP);
+    } else if (min === distMiddle) {
+        setHeight(SNAP_MIDDLE);
     } else {
-      setHeight(MIN_HEIGHT_PERCENT);
+        setHeight(SNAP_BOTTOM);
     }
   };
 
@@ -143,7 +157,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
       <div 
          className={`
             absolute inset-0 bg-black/30 transition-opacity duration-300
-            ${height > SNAP_THRESHOLD ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+            ${height > SNAP_BOTTOM ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
          `}
          onClick={onClose}
       />
@@ -179,7 +193,12 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
         {/* Content */}
         <div 
             ref={contentRef}
-            className={`flex-1 relative bg-white ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'}`}
+            className={`
+                flex-1 overflow-y-auto bg-white
+                ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'}
+            `}
+            // Prevent event propagation so touch moves inside content don't always drag the sheet
+            // We handle this via the smart drag logic in handleTouchMove attached to parent
         >
             {children}
         </div>

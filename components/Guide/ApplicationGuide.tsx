@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { IconArrowLeft, IconBookOpen, IconCheckCircle, IconUserCheck, IconInfo, IconPhone } from '../Icons';
+import { IconArrowLeft, IconBookOpen, IconCheckCircle, IconInfo, IconPhone } from '../Icons';
 import { GuideSection } from '../../types';
 import { getApplicationGuide } from '../../services/resortService';
 
