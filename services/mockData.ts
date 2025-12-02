@@ -1,2 +1,2 @@
-// This file is no longer used.
+// File deleted
 export {};

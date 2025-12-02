@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Resort } from '../../types';
 import { useResortDetail, DetailTab } from '../../core/hooks/useResortDetail';
@@ -14,20 +13,27 @@ interface ResortDetailPanelProps {
   onFlyToLocation?: (lat: number, lng: number) => void;
 }
 
-const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack, onMoveToLocation, onFlyToLocation }) => {
+const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ 
+  resort, 
+  onBack, 
+  onMoveToLocation, 
+  onFlyToLocation 
+}) => {
   const detailHook = useResortDetail(resort);
   const { state, actions } = detailHook;
   const { activeTab, selectedRoom, selectedNearby } = state;
 
-  // Render Sub-Pages
+  // 1. Show Room Detail View
   if (selectedRoom) {
     return <RoomDetailView room={selectedRoom} onBack={() => actions.setSelectedRoom(null)} />;
   }
+
+  // 2. Show Nearby Place Detail View
   if (selectedNearby) {
     return <NearbyDetailView place={selectedNearby} onBack={() => actions.setSelectedNearby(null)} />;
   }
 
-  // Render Main Panel
+  // 3. Main Resort Detail Panel
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
@@ -35,17 +41,13 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack, o
         <button onClick={onBack} className="mr-3 p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
           <IconArrowLeft className="w-5 h-5" />
         </button>
-        <div 
-            className="min-w-0 flex-1 cursor-pointer hover:opacity-70 transition-opacity" 
-            onClick={onMoveToLocation}
-            title="Move map to resort"
-        >
+        <div className="min-w-0 flex-1 cursor-pointer hover:opacity-70 transition-opacity" onClick={onMoveToLocation} title="Move map to resort">
           <h2 className="text-lg font-bold text-slate-800 truncate leading-tight">{resort.name}</h2>
           <p className="text-xs text-slate-500 truncate">{resort.region_depth1} {resort.region_depth2}</p>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Tabs */}
       <div className="flex border-b border-slate-100 flex-shrink-0">
         {Object.values(DetailTab).map((tab) => (
           <button
@@ -62,7 +64,7 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ resort, onBack, o
         ))}
       </div>
 
-      {/* Tab Content */}
+      {/* Content Area */}
       <div className="flex-1 overflow-y-auto bg-white">
         {activeTab === DetailTab.OVERVIEW && (
             <OverviewTab resort={resort} hookData={detailHook} />
