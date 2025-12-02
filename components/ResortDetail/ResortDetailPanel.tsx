@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Resort } from '../../types';
 import { useResortDetail, DetailTab } from '../../core/hooks/useResortDetail';

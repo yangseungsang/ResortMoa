@@ -1,4 +1,5 @@
-import { Resort, Review, FilterState, RoomType, GuideSection } from '../types';
+
+import { Resort, Review, FilterState, GuideSection } from '../types';
 import { generateBookingRule } from '../core/utils/brandRules';
 
 // --- Configuration ---
@@ -92,6 +93,26 @@ const transformResortData = (data: any): Resort => {
 };
 
 // --- API Methods ---
+
+export const verifyPassword = async (password: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/verify-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    
+    if (response.ok) {
+        const data = await response.json();
+        // Returns true if server confirms validity
+        return data.valid === true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Authentication failed:", error);
+    return false;
+  }
+};
 
 export const getResorts = async (filters: FilterState): Promise<Resort[]> => {
   const params = new URLSearchParams();

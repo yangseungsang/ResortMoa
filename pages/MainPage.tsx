@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Resort } from '../types';
 import { useResorts } from '../core/hooks/useResorts';
@@ -89,6 +90,8 @@ const MainPage: React.FC = () => {
   // --- Render Helpers ---
   const renderResortCard = (resort: Resort) => {
     const rule = resort.booking_rule;
+    
+    // Facility Display Logic: Show max 3, then +N
     const facilities = resort.facilities || [];
     const visibleFacilities = facilities.slice(0, 3);
     const hiddenCount = facilities.length - 3;
@@ -113,9 +116,13 @@ const MainPage: React.FC = () => {
                         <span className={`text-[10px] font-bold ${rule.ui_theme.text}`}>{rule.badge_text}</span>
                     </div>
                 )}
+                
+                {/* Facilities List */}
                 <div className="mt-3 flex flex-wrap gap-1.5">
                     {visibleFacilities.map((fac, i) => (
-                        <span key={i} className="text-[10px] px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-100 whitespace-nowrap">{fac}</span>
+                        <span key={i} className="text-[10px] px-2 py-1 bg-slate-50 text-slate-500 rounded border border-slate-100 whitespace-nowrap">
+                            {fac}
+                        </span>
                     ))}
                     {hiddenCount > 0 && (
                         <span className="text-[10px] px-2 py-1 bg-slate-50 text-slate-400 rounded border border-slate-100 font-medium">
