@@ -17,6 +17,13 @@ const API_BASE_URL = getEnv('VITE_API_BASE_URL', 'https://seungsang-server.duckd
 // --- Helper Functions ---
 
 /**
+ * Ensures clean URL construction by removing trailing slashes from base URL
+ */
+const getBaseUrl = () => {
+    return API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+};
+
+/**
  * Ensures image URLs are absolute, prepending API_BASE_URL if relative.
  */
 const normalizeImage = (url?: string): string => {
@@ -96,21 +103,24 @@ const transformResortData = (data: any): Resort => {
 
 export const verifyPassword = async (password: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/verify-password`, {
+    const baseUrl = getBaseUrl();
+    const response = await fetch(`${baseUrl}/verify-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password })
     });
     
-    if (response.ok) {
-        const data = await response.json();
-        // Returns true if server confirms validity
-        return data.valid === true;
+    // Handle HTTP Errors (4xx, 5xx) explicitly
+    if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
     }
-    return false;
+
+    const data = await response.json();
+    return data.valid === true;
   } catch (error) {
-    console.error("Authentication failed:", error);
-    return false;
+    console.error("Authentication Error:", error);
+    // Re-throw so the UI can distinguish between 'Invalid Password' (true/false) and 'Network Error' (throw)
+    throw error;
   }
 };
 
@@ -120,7 +130,8 @@ export const getResorts = async (filters: FilterState): Promise<Resort[]> => {
   if (filters.selectedRegion !== 'ALL') params.append('region', filters.selectedRegion);
   if (filters.searchQuery) params.append('keyword', filters.searchQuery);
 
-  const response = await fetch(`${API_BASE_URL}/resorts?${params.toString()}`);
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/resorts?${params.toString()}`);
   if (!response.ok) throw new Error(`API Error: ${response.status}`);
   
   const data = await response.json();
@@ -128,7 +139,8 @@ export const getResorts = async (filters: FilterState): Promise<Resort[]> => {
 };
 
 export const getResortById = async (id: number): Promise<Resort | undefined> => {
-  const response = await fetch(`${API_BASE_URL}/resorts/${id}`);
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/resorts/${id}`);
   if (!response.ok) throw new Error('Resort not found');
   
   const data = await response.json();
@@ -136,7 +148,8 @@ export const getResortById = async (id: number): Promise<Resort | undefined> => 
 };
 
 export const createReview = async (resortId: number, reviewData: Omit<Review, 'id' | 'date'>): Promise<Review> => {
-  const response = await fetch(`${API_BASE_URL}/resorts/${resortId}/reviews`, {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/resorts/${resortId}/reviews`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(reviewData)
@@ -147,19 +160,22 @@ export const createReview = async (resortId: number, reviewData: Omit<Review, 'i
 };
 
 export const getApplicationGuide = async (): Promise<GuideSection[]> => {
-  const response = await fetch(`${API_BASE_URL}/guide`);
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/guide`);
   if (!response.ok) throw new Error('Failed to fetch guide');
   return await response.json();
 };
 
 export const getRegions = async (): Promise<string[]> => {
-  const response = await fetch(`${API_BASE_URL}/regions`);
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/regions`);
   if (!response.ok) throw new Error('Failed to fetch regions');
   return await response.json();
 };
 
 export const getBrands = async (): Promise<string[]> => {
-  const response = await fetch(`${API_BASE_URL}/brands`);
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/brands`);
   if (!response.ok) throw new Error('Failed to fetch brands');
   return await response.json();
 };

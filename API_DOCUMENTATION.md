@@ -9,6 +9,27 @@ It serves as a standard for communication between the React Frontend and the Pyt
 
 ---
 
+## 7. Server Configuration Requirements
+
+### 7.1. CORS (Cross-Origin Resource Sharing)
+Since the frontend and backend may be hosted on different origins (e.g., localhost vs duckdns), **CORS configuration is mandatory**.
+The server must accept the `OPTIONS` method for all endpoints to handle preflight requests.
+
+**Required Configuration (Python FastAPI Example):**
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Allow all origins (or specify frontend domain)
+    allow_credentials=True,
+    allow_methods=["*"], # Must allow OPTIONS, GET, POST, etc.
+    allow_headers=["*"],
+)
+```
+
+---
+
 ## 1. Resources: Resorts
 
 ### 1.1. List Resorts

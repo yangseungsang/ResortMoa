@@ -9,12 +9,12 @@ interface MobileBottomSheetProps {
 
 // Snap Points Configuration
 const SNAP_TOP = 100;
-const SNAP_MIDDLE = 60; // "Above Middle"
-const SNAP_BOTTOM = 35; // "Bottom" / Peek (Default)
+const SNAP_MIDDLE = 60; // "Middle"
+const BACKDROP_THRESHOLD = 30; // Show backdrop when above this height
 const CLOSE_THRESHOLD = 15; // Drag below this to close
 
 export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, isVisible, onClose }) => {
-  const [height, setHeight] = useState(SNAP_BOTTOM);
+  const [height, setHeight] = useState(SNAP_MIDDLE);
   const [isDragging, setIsDragging] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -30,7 +30,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
 
   useEffect(() => {
     if (isVisible) {
-      setHeight(SNAP_BOTTOM); // Default to Bottom position on open
+      setHeight(SNAP_MIDDLE); // Default to Middle position on open
     }
   }, [isVisible]);
 
@@ -126,7 +126,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
     snapToPosition(heightRef.current);
   }).current;
 
-  // 3-Stage Snap Logic
+  // 2-Stage Snap Logic (Middle / Top)
   const snapToPosition = (currentHeight: number) => {
     if (currentHeight < CLOSE_THRESHOLD) {
       onClose();
@@ -136,16 +136,12 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
     // Calculate distances to snap points
     const distTop = Math.abs(currentHeight - SNAP_TOP);
     const distMiddle = Math.abs(currentHeight - SNAP_MIDDLE);
-    const distBottom = Math.abs(currentHeight - SNAP_BOTTOM);
     
-    const min = Math.min(distTop, distMiddle, distBottom);
-    
-    if (min === distTop) {
+    // Determine closest snap point
+    if (distTop < distMiddle) {
         setHeight(SNAP_TOP);
-    } else if (min === distMiddle) {
-        setHeight(SNAP_MIDDLE);
     } else {
-        setHeight(SNAP_BOTTOM);
+        setHeight(SNAP_MIDDLE);
     }
   };
 
@@ -157,7 +153,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
       <div 
          className={`
             absolute inset-0 bg-black/30 transition-opacity duration-300
-            ${height > SNAP_BOTTOM ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+            ${height > BACKDROP_THRESHOLD ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
          `}
          onClick={onClose}
       />
@@ -197,8 +193,6 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
                 flex-1 overflow-y-auto bg-white
                 ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'}
             `}
-            // Prevent event propagation so touch moves inside content don't always drag the sheet
-            // We handle this via the smart drag logic in handleTouchMove attached to parent
         >
             {children}
         </div>

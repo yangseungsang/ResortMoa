@@ -33,9 +33,9 @@ const App: React.FC = () => {
 
   // 2. 인증된 경우 메인 페이지 렌더링 (Lazy Loading 적용)
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-[100svh] bg-slate-100">
       <Suspense fallback={
-        <div className="h-screen w-full flex items-center justify-center bg-slate-50">
+        <div className="h-[100svh] w-full flex items-center justify-center bg-slate-50">
           <div className="flex flex-col items-center space-y-4">
              <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin shadow-sm"></div>
              <p className="text-slate-500 text-sm font-bold tracking-wide animate-pulse">Loading Resort Moa...</p>

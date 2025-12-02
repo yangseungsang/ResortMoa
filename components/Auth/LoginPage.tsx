@@ -7,7 +7,7 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [shake, setShake] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -16,24 +16,35 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     if (loading) return;
 
     setLoading(true);
-    setError(false);
+    setErrorMsg('');
 
     try {
       const success = await onLogin(password);
       if (!success) {
-        throw new Error('Invalid password');
+        setErrorMsg('Incorrect password. Please try again.');
+        triggerShake();
       }
-    } catch {
-      setError(true);
-      setShake(true);
-      setTimeout(() => setShake(false), 500); // Reset shake animation
+    } catch (err: any) {
+      console.error(err);
+      // 구체적인 에러 메시지 표시
+      if (err.message && err.message.includes('Server responded')) {
+         setErrorMsg('Server Error. Please verify server status.');
+      } else {
+         setErrorMsg('Connection failed. Check your network or CORS settings.');
+      }
+      triggerShake();
     } finally {
       setLoading(false);
     }
   };
 
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+  };
+
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-100 px-4">
+    <div className="min-h-[100svh] w-full flex items-center justify-center bg-slate-100 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden animate-fadeIn">
         {/* Header Section */}
         <div className="bg-teal-600 p-8 text-center">
@@ -61,13 +72,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 value={password}
                 onChange={(e) => {
                     setPassword(e.target.value);
-                    setError(false);
+                    setErrorMsg('');
                 }}
                 disabled={loading}
                 placeholder="Enter password"
                 className={`
                     w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 transition-all
-                    ${error 
+                    ${errorMsg 
                         ? 'border-red-300 focus:ring-red-200 bg-red-50' 
                         : 'border-slate-200 focus:ring-teal-500 focus:border-teal-500'
                     }
@@ -75,9 +86,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 `}
                 autoFocus
               />
-              {error && (
+              {errorMsg && (
                 <p className="text-red-500 text-xs mt-2 font-semibold ml-1">
-                  Incorrect password. Please try again.
+                  {errorMsg}
                 </p>
               )}
             </div>

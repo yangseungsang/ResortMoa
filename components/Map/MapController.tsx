@@ -115,7 +115,9 @@ const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ res
             maxZoom: 18,
         });
 
-        map.setView(INITIAL_CENTER, INITIAL_ZOOM);
+        const isMobile = window.innerWidth < 768;
+        // Reduce initial zoom on mobile (6 instead of 7)
+        map.setView(INITIAL_CENTER, isMobile ? 6 : INITIAL_ZOOM);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',

@@ -136,7 +136,7 @@ const MainPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 relative">
+    <div className="flex h-[100svh] w-screen overflow-hidden bg-slate-50 relative">
       {/* Sidebar */}
       <div className={`
             flex flex-col bg-white border-r border-slate-200 shadow-xl z-30 
@@ -218,18 +218,20 @@ const MainPage: React.FC = () => {
                 </div>
 
                 {/* List Content */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20 md:pb-4 scrollbar-hide">
+                <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
                     {loading ? (
                         <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div></div>
                     ) : resorts.length === 0 ? (
                         <div className="text-center py-10 text-slate-400 text-sm">No resorts found.</div>
                     ) : (
-                        resorts.map(renderResortCard)
+                        <div className="space-y-4">
+                            {resorts.map(renderResortCard)}
+                        </div>
                     )}
-                </div>
-                
-                <div className="p-3 border-t border-slate-100 bg-slate-50 text-xs text-center text-slate-400 flex-shrink-0 hidden md:block">
-                    Made by Resort Moa Team
+                    
+                    <div className="pt-8 pb-24 md:pb-4 text-xs text-center text-slate-400">
+                        Made by Resort Moa Team
+                    </div>
                 </div>
 
                 {/* Mobile Floating Map Button (Only on List View) */}
