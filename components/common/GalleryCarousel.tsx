@@ -6,9 +6,17 @@ interface GalleryCarouselProps {
   images?: string[];
   showTitle?: boolean;
   heightClass?: string;
+  className?: string;
+  overlayDots?: boolean;
 }
 
-export const GalleryCarousel = ({ images, showTitle = true, heightClass = "h-48" }: GalleryCarouselProps) => {
+export const GalleryCarousel = ({ 
+  images, 
+  showTitle = true, 
+  heightClass = "h-48", 
+  className = "mb-6",
+  overlayDots = false
+}: GalleryCarouselProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -16,6 +24,8 @@ export const GalleryCarousel = ({ images, showTitle = true, heightClass = "h-48"
   const [isDown, setIsDown] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+
+  const MAX_DOTS = 5;
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -51,7 +61,7 @@ export const GalleryCarousel = ({ images, showTitle = true, heightClass = "h-48"
   if (!images || images.length === 0) return null;
 
   return (
-    <div className="mb-6 select-none">
+    <div className={`${className} select-none relative`}>
        {showTitle && <h3 className="text-sm font-bold text-slate-800 mb-2 uppercase tracking-wide">Gallery</h3>}
        <div className="relative group">
           <div 
@@ -80,18 +90,45 @@ export const GalleryCarousel = ({ images, showTitle = true, heightClass = "h-48"
                 </div>
              ))}
           </div>
-          {/* Dot Indicators */}
+          
+          {/* Indicators */}
           {images.length > 1 && (
-            <div className="flex justify-center mt-3 space-x-1.5">
-              {images.map((_, idx) => (
-                  <div 
-                    key={idx}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                        idx === activeIndex ? 'w-4 bg-teal-600' : 'w-1.5 bg-slate-300'
-                    }`}
-                  />
-              ))}
-            </div>
+            <>
+              {images.length <= MAX_DOTS ? (
+                // Dots Indicator (Few images)
+                <div className={`flex justify-center space-x-1.5 ${
+                    overlayDots 
+                    ? 'absolute bottom-4 left-0 right-0 z-10' 
+                    : 'mt-3'
+                }`}>
+                  {images.map((_, idx) => (
+                      <div 
+                        key={idx}
+                        className={`h-1.5 rounded-full transition-all duration-300 shadow-sm ${
+                            idx === activeIndex 
+                              ? (overlayDots ? 'w-4 bg-white' : 'w-4 bg-teal-600')
+                              : (overlayDots ? 'w-1.5 bg-white/60' : 'w-1.5 bg-slate-300')
+                        }`}
+                      />
+                  ))}
+                </div>
+              ) : (
+                // Numeric Badge Indicator (Many images)
+                <div className={`pointer-events-none ${
+                     overlayDots 
+                     ? 'absolute bottom-4 right-4 z-10' 
+                     : 'flex justify-center mt-3'
+                }`}>
+                    <div className={`${
+                        overlayDots
+                        ? 'bg-black/60 text-white backdrop-blur-sm'
+                        : 'bg-slate-100 text-slate-600'
+                    } text-[10px] px-2.5 py-1 rounded-full font-bold shadow-sm`}>
+                        {activeIndex + 1} / {images.length}
+                    </div>
+                </div>
+              )}
+            </>
           )}
        </div>
     </div>

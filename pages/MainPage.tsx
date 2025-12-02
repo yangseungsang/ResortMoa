@@ -20,6 +20,9 @@ const MainPage: React.FC = () => {
   const [brandOptions, setBrandOptions] = useState<string[]>([]);
   const mapRef = useRef<MapControllerHandle>(null);
 
+  // Track navigation source for mobile
+  const [cameFromMobileList, setCameFromMobileList] = useState(false);
+
   // Fetch Options on Mount
   useEffect(() => {
     const fetchOptions = async () => {
@@ -36,9 +39,21 @@ const MainPage: React.FC = () => {
 
   const handleBackToList = () => {
       setSelectedResort(null);
+      // If we came from the mobile list view, re-open it upon going back
+      if (cameFromMobileList) {
+          setIsMobileListOpen(true);
+          setCameFromMobileList(false); // Reset
+      }
   };
 
   const handleResortSelect = async (resort: Resort) => {
+    // Determine if we are navigating from the mobile list view
+    if (isMobileListOpen) {
+        setCameFromMobileList(true);
+    } else {
+        setCameFromMobileList(false);
+    }
+
     // 1. Optimistic Update: Show summary data immediately
     setSelectedResort(resort);
     setShowGuide(false);
@@ -118,13 +133,17 @@ const MainPage: React.FC = () => {
             ) : (
             <>
                 {/* Header */}
-                <div className="p-6 border-b border-slate-100 flex-shrink-0 flex justify-between items-start">
-                    <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                            <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">M</div>
-                            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Resort Moa</h1>
+                <div className="p-6 border-b border-slate-100 flex-shrink-0 flex justify-between items-center">
+                    <div className="flex items-center space-x-3">
+                        <ImageWithFallback 
+                          src="https://seungsang-server.duckdns.org/static/images/logo.png" 
+                          alt="Resort Moa" 
+                          className="w-10 h-10 object-contain"
+                        />
+                        <div>
+                            <h1 className="text-xl font-extrabold text-slate-800 leading-none tracking-tight">Resort Moa</h1>
+                            <p className="text-[11px] text-slate-400 font-medium">Smart Resort Locator</p>
                         </div>
-                        <p className="text-xs text-slate-400 font-medium ml-1">Smart Resort Locator</p>
                     </div>
                     
                     <div className="flex items-center space-x-1">
@@ -300,12 +319,12 @@ const MainPage: React.FC = () => {
         {/* MOBILE Bottom Sheet for Resort Detail ONLY */}
         <MobileBottomSheet 
             isVisible={!!selectedResort} 
-            onClose={() => setSelectedResort(null)}
+            onClose={handleBackToList}
         >
             {selectedResort && (
                 <ResortDetailPanel 
                     resort={selectedResort} 
-                    onBack={() => setSelectedResort(null)}
+                    onBack={handleBackToList}
                     onMoveToLocation={handleMoveToLocation}
                     onFlyToLocation={handleFlyToCoords}
                 />

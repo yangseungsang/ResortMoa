@@ -1,14 +1,4 @@
 
-// Enums for filtering
-// Deprecated: Brands are now fetched dynamically from server.
-export enum Brand {
-  SONO = 'SONO',
-  HANWHA = 'HANWHA',
-  KENSINGTON = 'KENSINGTON',
-  Lotte = 'LOTTE',
-  Kumho = 'KUMHO',
-}
-
 export enum PlaceCategory {
   TOUR = 'TOUR',
   FOOD = 'FOOD',
@@ -81,8 +71,8 @@ export interface GuideSection {
 export interface Resort {
   id: number;
   name: string;
-  brand: string; // Changed from Brand enum to string for dynamic support
-  region_depth1: string; // Changed from Region enum to string for dynamic support
+  brand: string; 
+  region_depth1: string; 
   region_depth2: string;
   latitude: number;
   longitude: number;
@@ -94,12 +84,13 @@ export interface Resort {
   rooms: RoomType[];
   nearby_places: NearbyPlace[];
   reviews: Review[];
+  review_summary?: string; // Server provided review summary
   images?: string[]; // Gallery images
   booking_rule?: BookingRule; // Unified booking rule object
 }
 
 export interface FilterState {
   searchQuery: string;
-  selectedRegion: string; // Changed from Region | 'ALL' to string
-  selectedBrand: string; // Changed from Brand | 'ALL' to string
+  selectedRegion: string; 
+  selectedBrand: string; 
 }

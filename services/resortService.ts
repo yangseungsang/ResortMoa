@@ -61,6 +61,16 @@ const transformResortData = (resortData: any): Resort => {
   // Access application_type from raw data if needed
   const bookingRule = resortData.booking_rule || generateBookingRule(resortData.brand, resortData.application_type);
 
+  // Combine images and more_images, normalize, and deduplicate
+  // Prepend thumbnail_url to ensure it appears first in the gallery
+  const combinedImages = [
+      resortData.thumbnail_url,
+      ...(resortData.images || []),
+      ...(resortData.more_images || [])
+  ].filter(url => !!url).map(normalizeImage);
+  
+  const uniqueImages = Array.from(new Set(combinedImages));
+
   // Construct valid Resort object (removing application_type)
   const transformed: Resort = {
     id: resortData.id,
@@ -77,7 +87,8 @@ const transformResortData = (resortData: any): Resort => {
     facilities: resortData.facilities,
     booking_rule: bookingRule,
     reviews: resortData.reviews,
-    images: (resortData.images || []).map(normalizeImage),
+    review_summary: resortData.review_summary,
+    images: uniqueImages,
     rooms: (resortData.rooms || []).map((room: RoomType) => ({
       ...room,
       image_path: normalizeImage(room.image_path),

@@ -3,7 +3,7 @@ import React from 'react';
 import { Resort } from '../../../types';
 import { ImageWithFallback } from '../../common/ImageWithFallback';
 import { GalleryCarousel } from '../../common/GalleryCarousel';
-import { IconClock, IconPhone, IconInfo, IconStar } from '../../Icons';
+import { IconClock, IconPhone, IconInfo, IconStar, IconCheckCircle } from '../../Icons';
 import { useResortDetail } from '../../../core/hooks/useResortDetail';
 
 interface OverviewTabProps {
@@ -19,13 +19,26 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ resort, hookData }) =>
   // Use unified booking rule object
   const rule = resort.booking_rule;
 
+  // Prepare images for the hero slider (Prioritize gallery images, fallback to thumbnail)
+  const heroImages = (resort.images && resort.images.length > 0) 
+    ? resort.images 
+    : [resort.thumbnail_url];
+
   return (
     <div className="space-y-6 animate-fadeIn pb-10 whitespace-normal">
-        <div className="relative h-48 rounded-xl overflow-hidden shadow-sm mx-4 mt-4">
-            <ImageWithFallback src={resort.thumbnail_url} alt={resort.name} className="w-full h-full object-cover" />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-              <h2 className="text-xl font-bold text-white">{resort.name}</h2>
-              <p className="text-white/90 text-xs">{resort.address}</p>
+        {/* Hero Image Slider */}
+        <div className="relative h-48 rounded-xl overflow-hidden shadow-sm mx-4 mt-4 bg-slate-100">
+            <GalleryCarousel 
+                images={heroImages} 
+                showTitle={false} 
+                heightClass="h-48"
+                className="mb-0 h-full" 
+                overlayDots={true}
+            />
+            {/* Gradient Overlay for Text */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 pointer-events-none z-20">
+              <h2 className="text-xl font-bold text-white leading-tight">{resort.name}</h2>
+              <p className="text-white/90 text-xs mt-0.5">{resort.address}</p>
             </div>
         </div>
 
@@ -72,8 +85,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ resort, hookData }) =>
                 </div>
             </div>
 
-            {/* Gallery Carousel */}
-            <GalleryCarousel images={resort.images} />
+            {/* AI Review Summary */}
+            {resort.review_summary && (
+                <div className="mb-6">
+                    <h3 className="text-sm font-bold text-slate-800 mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                        <IconCheckCircle className="w-4 h-4 text-indigo-600" />
+                        <span>Review Summary</span>
+                    </h3>
+                    <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-sm text-slate-700 leading-relaxed shadow-sm">
+                        {resort.review_summary}
+                    </div>
+                </div>
+            )}
 
             {/* Reviews Section */}
             <div>

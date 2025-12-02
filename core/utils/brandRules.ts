@@ -1,5 +1,5 @@
 
-import { Brand, ApplicationType, BookingRule } from '../../types';
+import { ApplicationType, BookingRule } from '../../types';
 
 // Helper to generate a unified BookingRule object based on Brand and ApplicationType
 // In a real scenario, this data would come directly from the server.
@@ -67,19 +67,19 @@ export const generateBookingRule = (brand: string, appType: ApplicationType): Bo
   // Normalize brand string check
   const brandKey = brand.toUpperCase();
 
-  if (brandKey === Brand.SONO) {
+  if (brandKey === 'SONO') {
       brandDetail = "Lottery applications open from the 1st to 10th of the previous month. Unsold rooms open for booking from the 15th.";
       brandBadgeSuffix = "1st-10th";
-  } else if (brandKey === Brand.HANWHA) {
+  } else if (brandKey === 'HANWHA') {
       brandDetail = "Regular lottery runs until the 10th. Open booking starts on the 20th of the previous month at 9:00 AM.";
       brandBadgeSuffix = "1st-10th";
-  } else if (brandKey === Brand.KENSINGTON) {
+  } else if (brandKey === 'KENSINGTON') {
       brandDetail = "Reservations open 6 weeks in advance on Tuesdays at 09:00 AM.";
       brandBadgeSuffix = "6 wks prior";
-  } else if (brandKey === Brand.Lotte.toUpperCase()) {
+  } else if (brandKey === 'LOTTE') {
       brandDetail = "Lottery applications accepted 2 months in advance. General booking opens on the 1st of the previous month.";
       brandBadgeSuffix = "2 mon prior";
-  } else if (brandKey === Brand.Kumho.toUpperCase()) {
+  } else if (brandKey === 'KUMHO') {
       brandDetail = "Booking opens on the 1st day of the previous month at 10:00 AM.";
       brandBadgeSuffix = "1st of prev";
   } else {

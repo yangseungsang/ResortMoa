@@ -105,7 +105,6 @@ export const NearbyDetailView: React.FC<NearbyDetailViewProps> = ({ place, onBac
             )}
 
             <div className="bg-white p-2 text-sm text-slate-700 leading-relaxed">
-                <h5 className="font-bold text-slate-900 text-sm mb-1">About</h5>
                 {place.detail_content || place.description}
             </div>
         </div>
