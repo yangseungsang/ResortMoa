@@ -19,10 +19,13 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
   const sheetRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   
+  // Ref to track the actual scrollable element dynamically
+  const activeScrollRef = useRef<HTMLElement | null>(null);
+  
   // Refs for drag calculation
   const startY = useRef<number>(0);
   const startHeight = useRef<number>(0);
-  const isAtTop = useRef<boolean>(true); // Track if content is scrolled to top
+  const isAtTop = useRef<boolean>(true); // Track logic for desktop/mouse events
   
   // Ref to track current height for event listeners
   const heightRef = useRef(height);
@@ -34,22 +37,32 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
     }
   }, [isVisible]);
 
-  // Determine if expanded (allow scrolling) or collapsed (drag only)
-  // Use a slight buffer (e.g., 98%) to ensure it feels fully expanded
   const isExpanded = height >= (SNAP_TOP - 2);
-  
-  // Determine if maximized to hide handle
   const isMaximized = height >= 100;
 
   // --- Touch Handlers (Mobile) ---
   const handleTouchStart = (e: React.TouchEvent) => {
-    // Check scroll position at start of drag
-    if (contentRef.current && isExpanded) {
-        // We allow a small tolerance (e.g., 1px) for float calculation errors or sub-pixel rendering
-        isAtTop.current = contentRef.current.scrollTop <= 1;
-    } else {
-        isAtTop.current = true;
+    // 1. Find the actual scrollable parent under the finger
+    // This solves the issue where nested components (like ResortDetailPanel) handle the scroll,
+    // leaving contentRef.scrollTop always at 0.
+    let target = e.target as HTMLElement;
+    let scrollParent: HTMLElement | null = null;
+
+    // Traverse up until we hit the sheet container or find a scrollable element
+    while (target && target !== sheetRef.current) {
+        const style = window.getComputedStyle(target);
+        const overflowY = style.overflowY;
+        // Check if element is scrollable AND has content larger than itself
+        const isScrollable = (overflowY === 'auto' || overflowY === 'scroll') && target.scrollHeight > target.clientHeight;
+        
+        if (isScrollable) {
+            scrollParent = target;
+            break;
+        }
+        target = target.parentElement as HTMLElement;
     }
+    
+    activeScrollRef.current = scrollParent;
 
     setIsDragging(true);
     startY.current = e.touches[0].clientY;
@@ -61,16 +74,21 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
     const currentY = e.touches[0].clientY;
     const deltaY = startY.current - currentY; // Positive = Drag Up, Negative = Drag Down
 
-    // Smart Drag Logic:
-    // 1. If fully expanded and dragging UP, allow content scroll (ignore sheet resize)
-    if (isExpanded && deltaY > 0) {
-        return;
-    }
-    // 2. If fully expanded and dragging DOWN, only resize sheet if we are at the top of content
-    // We check both the initial state AND the real-time scrollTop to be safe.
-    if (isExpanded && deltaY < 0) {
-        if (!isAtTop.current || (contentRef.current && contentRef.current.scrollTop > 0)) {
-            return;
+    // Smart Drag Logic for Touch
+    if (isExpanded) {
+        // 1. Dragging UP (Scrolling content down)
+        // If we found a valid scroll container, let native scroll handle it.
+        // Even if we didn't find one, we usually don't want to drag the sheet up past 100%.
+        if (deltaY > 0) {
+             return; 
+        }
+
+        // 2. Dragging DOWN (Scrolling content up)
+        // CRITICAL: Check the dynamically detected scroll parent, not just contentRef
+        if (deltaY < 0) {
+            if (activeScrollRef.current && activeScrollRef.current.scrollTop > 0) {
+                return; // Content is not at top, allow content scroll
+            }
         }
     }
 
@@ -87,6 +105,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
   const handleTouchEnd = () => {
     setIsDragging(false);
     snapToPosition(height);
+    activeScrollRef.current = null; // Reset
   };
 
   // --- Mouse Handlers (Desktop Testing) ---
@@ -113,7 +132,6 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
 
     if (isExpandedRef && deltaY > 0) return;
     if (isExpandedRef && deltaY < 0) {
-        // Check scrollTop for mouse events too if contentRef is available
         if (!isAtTop.current || (contentRef.current && contentRef.current.scrollTop > 0)) {
              return;
         }
