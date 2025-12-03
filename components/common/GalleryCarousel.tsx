@@ -58,7 +58,7 @@ export const GalleryCarousel = ({
     e.preventDefault();
     e.stopPropagation(); // Prevent parent drag
     const x = e.pageX - containerRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Scroll speed multiplier
+    const walk = (x - startX); // Scroll speed multiplier removed (1:1)
     containerRef.current.scrollLeft = scrollLeft - walk;
   };
 
@@ -134,7 +134,7 @@ export const GalleryCarousel = ({
                  {images.map((img, idx) => (
                     <div 
                         key={idx} 
-                        className="w-full flex-shrink-0 snap-center"
+                        className="w-full flex-shrink-0 snap-center snap-always"
                     >
                        <ImageWithFallback 
                           src={img} 

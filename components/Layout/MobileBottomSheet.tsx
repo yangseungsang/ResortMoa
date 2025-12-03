@@ -12,6 +12,7 @@ const SNAP_TOP = 100;
 const SNAP_MIDDLE = 60;
 const BACKDROP_THRESHOLD = 30;
 const CLOSE_THRESHOLD = 15;
+const DRAG_ZONE_HEIGHT = 120; // Height of the area at the top that acts as a drag handle (Handle + Header)
 
 export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, isVisible, onClose }) => {
   const [height, setHeight] = useState(SNAP_MIDDLE);
@@ -34,10 +35,24 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
   }, [isVisible]);
 
   const isMaximized = height >= 100;
+  // Hide handle when maximized (full screen) and not currently dragging
+  const hideHandle = isMaximized && !isDragging;
 
   // --- Touch Handlers (Mobile) ---
   const handleTouchStart = (e: React.TouchEvent) => {
-    // Only allow dragging via the handle
+    const target = e.target as HTMLElement;
+    // Prevent dragging when interacting with buttons/inputs inside the drag zone
+    if (target.closest('button, input, textarea, select, a')) return;
+
+    if (sheetRef.current) {
+        // Calculate touch position relative to the sheet top
+        const rect = sheetRef.current.getBoundingClientRect();
+        const relativeY = e.touches[0].clientY - rect.top;
+
+        // Only allow dragging if within the top drag zone (Handle + Header area)
+        if (relativeY > DRAG_ZONE_HEIGHT) return;
+    }
+
     setIsDragging(true);
     startY.current = e.touches[0].clientY;
     startHeight.current = sheetRef.current ? sheetRef.current.clientHeight : 0;
@@ -64,6 +79,15 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
 
   // --- Mouse Handlers (Desktop Testing) ---
   const handleMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, input, textarea, select, a')) return;
+
+    if (sheetRef.current) {
+        const rect = sheetRef.current.getBoundingClientRect();
+        const relativeY = e.clientY - rect.top;
+        if (relativeY > DRAG_ZONE_HEIGHT) return;
+    }
+
     setIsDragging(true);
     startY.current = e.clientY;
     startHeight.current = sheetRef.current ? sheetRef.current.clientHeight : 0;
@@ -124,6 +148,10 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
       {/* Sheet Container */}
       <div
         ref={sheetRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
         className={`
             w-full bg-white shadow-[0_-5px_20px_rgba(0,0,0,0.15)] relative flex flex-col pointer-events-auto
             ${isMaximized ? 'rounded-none' : 'rounded-t-2xl'}
@@ -133,16 +161,12 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
             transition: isDragging ? 'none' : 'height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' 
         }}
       >
-        {/* Drag Handle */}
+        {/* Drag Handle Indicator (Visual Only) */}
         <div 
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
             className={`
                 w-full flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing bg-slate-50 border-b border-slate-100 
                 transition-all duration-300 ease-in-out overflow-hidden
-                h-8 opacity-100
+                ${hideHandle ? 'h-0 opacity-0 border-none' : 'h-8 opacity-100'}
                 ${isMaximized ? 'rounded-none' : 'rounded-t-2xl'}
             `}
         >
