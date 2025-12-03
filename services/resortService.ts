@@ -1,5 +1,4 @@
 
-
 import { Resort, Review, FilterState, GuideSection } from '../types';
 import { generateBookingRule } from '../core/utils/brandRules';
 
@@ -127,13 +126,17 @@ export const verifyPassword = async (password: string): Promise<boolean> => {
 };
 
 export const getResorts = async (filters: FilterState): Promise<Resort[]> => {
+  const baseUrl = getBaseUrl();
+  
   const params = new URLSearchParams();
   if (filters.selectedBrand !== 'ALL') params.append('brand', filters.selectedBrand);
   if (filters.selectedRegion !== 'ALL') params.append('region', filters.selectedRegion);
   if (filters.searchQuery) params.append('keyword', filters.searchQuery);
 
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/resorts?${params.toString()}`);
+  const queryString = params.toString();
+  const url = `${baseUrl}/resorts${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url);
   if (!response.ok) throw new Error(`API Error: ${response.status}`);
   
   const data = await response.json();

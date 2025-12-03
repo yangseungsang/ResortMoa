@@ -9,9 +9,25 @@ interface MobileBottomSheetProps {
 
 // Snap Points Configuration
 const SNAP_TOP = 100;
-const SNAP_MIDDLE = 60; // "Middle"
-const BACKDROP_THRESHOLD = 30; // Show backdrop when above this height
-const CLOSE_THRESHOLD = 15; // Drag below this to close
+const SNAP_MIDDLE = 60;
+const BACKDROP_THRESHOLD = 30;
+const CLOSE_THRESHOLD = 15;
+
+// Helper to find the actual scrollable parent to handle nested scrolling correctly
+const findScrollableParent = (element: HTMLElement | null, root: HTMLElement | null): HTMLElement | null => {
+  let target = element;
+  while (target && target !== root) {
+    const style = window.getComputedStyle(target);
+    const overflowY = style.overflowY;
+    const isScrollable = (overflowY === 'auto' || overflowY === 'scroll') && target.scrollHeight > target.clientHeight;
+    
+    if (isScrollable) {
+      return target;
+    }
+    target = target.parentElement as HTMLElement;
+  }
+  return null;
+};
 
 export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, isVisible, onClose }) => {
   const [height, setHeight] = useState(SNAP_MIDDLE);
@@ -33,7 +49,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
 
   useEffect(() => {
     if (isVisible) {
-      setHeight(SNAP_MIDDLE); // Default to Middle position on open
+      setHeight(SNAP_MIDDLE);
     }
   }, [isVisible]);
 
@@ -42,27 +58,8 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
 
   // --- Touch Handlers (Mobile) ---
   const handleTouchStart = (e: React.TouchEvent) => {
-    // 1. Find the actual scrollable parent under the finger
-    // This solves the issue where nested components (like ResortDetailPanel) handle the scroll,
-    // leaving contentRef.scrollTop always at 0.
-    let target = e.target as HTMLElement;
-    let scrollParent: HTMLElement | null = null;
-
-    // Traverse up until we hit the sheet container or find a scrollable element
-    while (target && target !== sheetRef.current) {
-        const style = window.getComputedStyle(target);
-        const overflowY = style.overflowY;
-        // Check if element is scrollable AND has content larger than itself
-        const isScrollable = (overflowY === 'auto' || overflowY === 'scroll') && target.scrollHeight > target.clientHeight;
-        
-        if (isScrollable) {
-            scrollParent = target;
-            break;
-        }
-        target = target.parentElement as HTMLElement;
-    }
-    
-    activeScrollRef.current = scrollParent;
+    const target = e.target as HTMLElement;
+    activeScrollRef.current = findScrollableParent(target, sheetRef.current);
 
     setIsDragging(true);
     startY.current = e.touches[0].clientY;
@@ -74,17 +71,11 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
     const currentY = e.touches[0].clientY;
     const deltaY = startY.current - currentY; // Positive = Drag Up, Negative = Drag Down
 
-    // Smart Drag Logic for Touch
     if (isExpanded) {
-        // 1. Dragging UP (Scrolling content down)
-        // If we found a valid scroll container, let native scroll handle it.
-        // Even if we didn't find one, we usually don't want to drag the sheet up past 100%.
-        if (deltaY > 0) {
-             return; 
-        }
+        // Dragging UP: Prevent over-dragging past top
+        if (deltaY > 0) return;
 
-        // 2. Dragging DOWN (Scrolling content up)
-        // CRITICAL: Check the dynamically detected scroll parent, not just contentRef
+        // Dragging DOWN: Check nested scroll position
         if (deltaY < 0) {
             if (activeScrollRef.current && activeScrollRef.current.scrollTop > 0) {
                 return; // Content is not at top, allow content scroll
@@ -92,7 +83,6 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
         }
     }
 
-    // Otherwise, resize the sheet
     const windowHeight = window.innerHeight;
     const newHeightPx = startHeight.current + deltaY;
     const newHeightPercent = (newHeightPx / windowHeight) * 100;
@@ -105,13 +95,17 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
   const handleTouchEnd = () => {
     setIsDragging(false);
     snapToPosition(height);
-    activeScrollRef.current = null; // Reset
+    activeScrollRef.current = null;
   };
 
   // --- Mouse Handlers (Desktop Testing) ---
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (contentRef.current && isExpanded) {
-        isAtTop.current = contentRef.current.scrollTop <= 0;
+    const target = e.target as HTMLElement;
+    activeScrollRef.current = findScrollableParent(target, sheetRef.current);
+    
+    // Check initial scroll state
+    if (activeScrollRef.current && isExpanded) {
+        isAtTop.current = activeScrollRef.current.scrollTop <= 0;
     } else {
         isAtTop.current = true;
     }
@@ -132,7 +126,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
 
     if (isExpandedRef && deltaY > 0) return;
     if (isExpandedRef && deltaY < 0) {
-        if (!isAtTop.current || (contentRef.current && contentRef.current.scrollTop > 0)) {
+        if (!isAtTop.current || (activeScrollRef.current && activeScrollRef.current.scrollTop > 0)) {
              return;
         }
     }
@@ -148,23 +142,21 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
 
   const handleGlobalMouseUp = useRef(() => {
     setIsDragging(false);
+    activeScrollRef.current = null;
     document.removeEventListener('mousemove', handleGlobalMouseMove);
     document.removeEventListener('mouseup', handleGlobalMouseUp);
     snapToPosition(heightRef.current);
   }).current;
 
-  // 2-Stage Snap Logic (Middle / Top)
   const snapToPosition = (currentHeight: number) => {
     if (currentHeight < CLOSE_THRESHOLD) {
       onClose();
       return;
     }
     
-    // Calculate distances to snap points
     const distTop = Math.abs(currentHeight - SNAP_TOP);
     const distMiddle = Math.abs(currentHeight - SNAP_MIDDLE);
     
-    // Determine closest snap point
     if (distTop < distMiddle) {
         setHeight(SNAP_TOP);
     } else {
@@ -196,13 +188,12 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
             height: `${height}%`,
             transition: isDragging ? 'none' : 'height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' 
         }}
-        // Handlers attached to the container to allow dragging anywhere
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
       >
-        {/* Drag Handle Visual */}
+        {/* Drag Handle */}
         <div 
             className={`
                 w-full flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing bg-slate-50 border-b border-slate-100 

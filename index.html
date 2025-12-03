@@ -67,6 +67,14 @@
         background: transparent !important;
       }
       
+      /* Optimize Leaflet animation performance */
+      .leaflet-fade-anim .leaflet-tile,
+      .leaflet-zoom-anim .leaflet-zoom-animated {
+        will-change: transform; 
+        transform: translate3d(0,0,0); /* Force GPU */
+      }
+      /* Removed .leaflet-pane will-change to prevent end-of-animation jitter */
+      
       /* Animations */
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }

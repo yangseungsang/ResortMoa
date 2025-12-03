@@ -71,8 +71,13 @@ const createGroupMarkerIcon = (count: number) => L.divIcon({
 const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ resorts, selectedResort, onResortSelect }, ref) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.Marker[]>([]);
+  const markersRef = useRef<Map<number, L.Marker>>(new Map());
   const nearbyLayerRef = useRef<L.LayerGroup | null>(null);
+  
+  const onResortSelectRef = useRef(onResortSelect);
+  useEffect(() => {
+    onResortSelectRef.current = onResortSelect;
+  }, [onResortSelect]);
 
   useImperativeHandle(ref, () => ({
     flyToLocation: (lat: number, lng: number) => {
@@ -84,7 +89,7 @@ const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ res
          const targetZoom = 15;
          let targetCenter = latLng;
 
-         // Mobile Adjustment: Shift center down to accommodate bottom sheet
+         // Mobile Adjustment
          if (window.innerWidth < 768) {
             const mapSize = map.getSize();
             const offsetY = mapSize.y * 0.25; 
@@ -94,7 +99,10 @@ const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ res
          }
 
          try {
-            map.flyTo(targetCenter, targetZoom, { duration: 1.2 });
+            map.flyTo(targetCenter, targetZoom, { 
+                duration: 1.5,
+                easeLinearity: 0.25
+            });
          } catch {
             map.setView(targetCenter, targetZoom);
          }
@@ -113,10 +121,13 @@ const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ res
             maxBoundsViscosity: 1.0,
             minZoom: 6,
             maxZoom: 18,
+            preferCanvas: true,
+            zoomSnap: 0, 
+            zoomDelta: 0.5,
+            wheelPxPerZoomLevel: 120
         });
 
         const isMobile = window.innerWidth < 768;
-        // Reduce initial zoom on mobile (6 instead of 7)
         map.setView(INITIAL_CENTER, isMobile ? 6 : INITIAL_ZOOM);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -139,39 +150,62 @@ const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ res
     };
   }, []);
 
-  // Update Markers (Resorts)
+  // Marker Lifecycle Management (Create/Remove)
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
+    const currentMarkers = markersRef.current;
+    const resortIds = new Set(resorts.map(r => r.id));
 
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
+    // Remove
+    for (const [id, marker] of currentMarkers.entries()) {
+        if (!resortIds.has(id)) {
+            marker.remove();
+            currentMarkers.delete(id);
+        }
+    }
 
+    // Add
     resorts.forEach(resort => {
-      const latLng = safeLatLng(resort.latitude, resort.longitude);
-      if (!latLng) return;
+        if (!currentMarkers.has(resort.id)) {
+            const latLng = safeLatLng(resort.latitude, resort.longitude);
+            if (!latLng) return;
 
-      const isSelected = selectedResort && selectedResort.id === resort.id;
-      const markerIcon = createCustomMarker(isSelected ? '#dc2626' : '#0d9488');
+            const markerIcon = createCustomMarker('#0d9488');
+            const marker = L.marker(latLng, {
+                title: resort.name,
+                icon: markerIcon,
+                opacity: 1.0,
+                zIndexOffset: 100
+            }).addTo(map);
 
-      const marker = L.marker(latLng, {
-          title: resort.name,
-          icon: markerIcon,
-          opacity: selectedResort && !isSelected ? 0.8 : 1.0,
-          zIndexOffset: isSelected ? 1000 : 100
-      }).addTo(map);
+            marker.on('click', () => onResortSelectRef.current(resort));
+            
+            marker.bindTooltip(resort.name, {
+                permanent: false, direction: 'top', offset: [0, -36],
+                className: 'px-2 py-1 bg-slate-800 text-white text-xs rounded shadow-lg border-0 font-sans'
+            });
 
-      marker.on('click', () => onResortSelect(resort));
-      
-      if (!selectedResort) {
-          marker.bindTooltip(resort.name, {
-              permanent: false, direction: 'top', offset: [0, -36],
-              className: 'px-2 py-1 bg-slate-800 text-white text-xs rounded shadow-lg border-0 font-sans'
-          });
-      }
-      markersRef.current.push(marker);
+            currentMarkers.set(resort.id, marker);
+        }
     });
-  }, [resorts, onResortSelect, selectedResort]);
+  }, [resorts]);
+
+  // Visual Updates (State Changes)
+  useEffect(() => {
+    markersRef.current.forEach((marker, id) => {
+        const isSelected = selectedResort?.id === id;
+        
+        const newColor = isSelected ? '#dc2626' : '#0d9488';
+        const newIcon = createCustomMarker(newColor);
+        
+        marker.setIcon(newIcon);
+        marker.setZIndexOffset(isSelected ? 1000 : 100);
+        
+        const opacity = (selectedResort && !isSelected) ? 0.8 : 1.0;
+        marker.setOpacity(opacity);
+    });
+  }, [selectedResort]);
 
   // Update Nearby Places
   useEffect(() => {

@@ -23,7 +23,6 @@ const MainPage: React.FC = () => {
   const [brandOptions, setBrandOptions] = useState<string[]>([]);
   
   const mapRef = useRef<MapControllerHandle>(null);
-  const [cameFromMobileList, setCameFromMobileList] = useState(false);
 
   // --- Effects ---
   useEffect(() => {
@@ -48,16 +47,9 @@ const MainPage: React.FC = () => {
   // --- Handlers ---
   const handleBackToList = () => {
       setSelectedResort(null);
-      if (cameFromMobileList) {
-          setIsMobileListOpen(true);
-          setCameFromMobileList(false);
-      }
   };
 
   const handleResortSelect = async (resort: Resort) => {
-    setCameFromMobileList(isMobileListOpen);
-
-    // Optimistic Update
     setSelectedResort(resort);
     setShowGuide(false);
     setIsMobileListOpen(false);
@@ -65,7 +57,6 @@ const MainPage: React.FC = () => {
     
     mapRef.current?.flyToLocation(resort.latitude, resort.longitude);
 
-    // Fetch Full Details
     try {
         const fullData = await getResortById(resort.id);
         if (fullData) setSelectedResort(fullData);
