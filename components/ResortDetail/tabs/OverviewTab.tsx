@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Resort } from '../../../types';
 import { ImageWithFallback } from '../../common/ImageWithFallback';
@@ -28,19 +27,20 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ resort, hookData }) =>
   return (
     <div className="space-y-6 animate-fadeIn pb-10 whitespace-normal">
         {/* Hero Image Slider */}
-        <div className="relative h-48 rounded-xl overflow-hidden shadow-sm mx-4 mt-4 bg-slate-100">
+        <div className="mx-4 mt-4">
             <GalleryCarousel 
                 images={heroImages} 
                 showTitle={false} 
                 heightClass="h-48"
-                className="mb-0 h-full" 
-                overlayDots={true}
-            />
-            {/* Gradient Overlay for Text */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 pointer-events-none z-20">
-              <h2 className="text-xl font-bold text-white leading-tight">{resort.name}</h2>
-              <p className="text-white/90 text-xs mt-0.5">{resort.address}</p>
-            </div>
+                className="mb-0" 
+                overlayDots={false}
+            >
+                {/* Gradient Overlay for Text */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 pointer-events-none z-20">
+                  <h2 className="text-xl font-bold text-white leading-tight">{resort.name}</h2>
+                  <p className="text-white/90 text-xs mt-0.5">{resort.address}</p>
+                </div>
+            </GalleryCarousel>
         </div>
 
         <div className="px-4">
