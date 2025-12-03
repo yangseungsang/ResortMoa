@@ -45,7 +45,8 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
   const handleTouchStart = (e: React.TouchEvent) => {
     // Check scroll position at start of drag
     if (contentRef.current && isExpanded) {
-        isAtTop.current = contentRef.current.scrollTop <= 0;
+        // We allow a small tolerance (e.g., 1px) for float calculation errors or sub-pixel rendering
+        isAtTop.current = contentRef.current.scrollTop <= 1;
     } else {
         isAtTop.current = true;
     }
@@ -66,8 +67,11 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
         return;
     }
     // 2. If fully expanded and dragging DOWN, only resize sheet if we are at the top of content
-    if (isExpanded && deltaY < 0 && !isAtTop.current) {
-        return;
+    // We check both the initial state AND the real-time scrollTop to be safe.
+    if (isExpanded && deltaY < 0) {
+        if (!isAtTop.current || (contentRef.current && contentRef.current.scrollTop > 0)) {
+            return;
+        }
     }
 
     // Otherwise, resize the sheet
@@ -108,7 +112,12 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
     const isExpandedRef = heightRef.current >= (SNAP_TOP - 2);
 
     if (isExpandedRef && deltaY > 0) return;
-    if (isExpandedRef && deltaY < 0 && !isAtTop.current) return;
+    if (isExpandedRef && deltaY < 0) {
+        // Check scrollTop for mouse events too if contentRef is available
+        if (!isAtTop.current || (contentRef.current && contentRef.current.scrollTop > 0)) {
+             return;
+        }
+    }
 
     const windowHeight = window.innerHeight;
     const newHeightPx = startHeight.current + deltaY;

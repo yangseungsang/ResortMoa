@@ -1,9 +1,10 @@
 
+
 import React from 'react';
 import { Resort } from '../../../types';
 import { ImageWithFallback } from '../../common/ImageWithFallback';
 import { GalleryCarousel } from '../../common/GalleryCarousel';
-import { IconClock, IconPhone, IconInfo, IconStar, IconCheckCircle } from '../../Icons';
+import { IconClock, IconPhone, IconInfo, IconStar, IconCheckCircle, IconExternalLink } from '../../Icons';
 import { useResortDetail } from '../../../core/hooks/useResortDetail';
 
 interface OverviewTabProps {
@@ -94,6 +95,30 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ resort, hookData }) =>
                     </h3>
                     <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-sm text-slate-700 leading-relaxed shadow-sm">
                         {resort.review_summary}
+                    </div>
+                </div>
+            )}
+
+            {/* External Links Section */}
+            {resort.external_links && resort.external_links.length > 0 && (
+                <div className="mb-6">
+                    <h3 className="text-sm font-bold text-slate-800 mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                        <IconExternalLink className="w-4 h-4 text-slate-600" />
+                        <span>External Info</span>
+                    </h3>
+                    <div className="grid grid-cols-1 gap-2">
+                        {resort.external_links.map((link, idx) => (
+                            <a 
+                                key={idx} 
+                                href={link.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors group"
+                            >
+                                <span className="text-sm font-semibold text-slate-700 group-hover:text-teal-700">{link.label}</span>
+                                <IconExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                            </a>
+                        ))}
                     </div>
                 </div>
             )}

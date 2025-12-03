@@ -1,4 +1,5 @@
 
+
 import { Resort, Review, FilterState, GuideSection } from '../types';
 import { generateBookingRule } from '../core/utils/brandRules';
 
@@ -95,7 +96,8 @@ const transformResortData = (data: any): Resort => {
       image_url: normalizeImage(place.image_url || place.imageUrl),
       images: (place.images || []).map(normalizeImage),
       more_images: (place.more_images || []).map(normalizeImage)
-    }))
+    })),
+    external_links: data.external_links || []
   };
 };
 
