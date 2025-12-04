@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { RoomType, NearbyPlace, PlaceCategory } from '../../../types';
 import { GalleryCarousel } from '../../common/GalleryCarousel';
-import { IconArrowLeft, IconUsers, IconBed, IconCamera, IconExternalLink, IconMapPin } from '../../Icons';
+import { IconArrowLeft, IconExternalLink, IconMapPin } from '../../Icons';
 
 interface RoomDetailViewProps {
   room: RoomType;

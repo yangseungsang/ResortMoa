@@ -2,7 +2,7 @@
 import React from 'react';
 import { RoomType, NearbyPlace, PlaceCategory } from '../../../types';
 import { ImageWithFallback } from '../../common/ImageWithFallback';
-import { IconCamera, IconUsers, IconBed, IconUtensils, IconTent, IconShoppingBag, IconMapPin } from '../../Icons';
+import { IconMapPin } from '../../Icons';
 
 interface RoomsTabProps {
   rooms: RoomType[];
@@ -20,7 +20,6 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ rooms, onSelect }) => (
         <div className="h-40 w-full overflow-hidden relative">
           <ImageWithFallback src={room.image_path} alt={room.name} className="w-full h-full object-cover" />
           <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded-full flex items-center">
-               <IconCamera className="w-3 h-3 mr-1" />
                More Info
           </div>
         </div>
@@ -28,12 +27,10 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ rooms, onSelect }) => (
           <div className="flex justify-between items-start mb-2">
             <h4 className="font-bold text-slate-800">{room.name}</h4>
             <div className="flex items-center space-x-1 text-slate-600 bg-slate-100 px-2 py-1 rounded text-[10px] font-bold">
-              <IconUsers className="w-3 h-3" />
               <span>{room.capacity}</span>
             </div>
           </div>
           <div className="flex items-start space-x-2 text-slate-500 text-xs">
-            <IconBed className="w-3 h-3 mt-0.5 flex-shrink-0" />
             <span>{room.features}</span>
           </div>
         </div>
@@ -53,15 +50,6 @@ interface NearbyTabProps {
 }
 
 export const NearbyTab: React.FC<NearbyTabProps> = ({ places, onSelect }) => {
-    const getIcon = (category: PlaceCategory) => {
-        switch (category) {
-          case PlaceCategory.FOOD: return <IconUtensils className="w-5 h-5" />;
-          case PlaceCategory.TOUR: return <IconTent className="w-5 h-5" />;
-          case PlaceCategory.STORE: return <IconShoppingBag className="w-5 h-5" />;
-          default: return <IconMapPin className="w-5 h-5" />;
-        }
-      };
-  
       const getColor = (category: PlaceCategory) => {
         switch (category) {
           case PlaceCategory.FOOD: return 'bg-orange-100 text-orange-600';
@@ -93,7 +81,7 @@ export const NearbyTab: React.FC<NearbyTabProps> = ({ places, onSelect }) => {
                         </div>
                     ) : (
                         <div className={`w-12 h-12 flex items-center justify-center rounded-lg ${getColor(place.category)}`}>
-                            {getIcon(place.category)}
+                            <IconMapPin className="w-5 h-5" />
                         </div>
                     )}
                 </div>

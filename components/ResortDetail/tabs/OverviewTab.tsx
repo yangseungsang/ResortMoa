@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Resort } from '../../../types';
-import { ImageWithFallback } from '../../common/ImageWithFallback';
 import { GalleryCarousel } from '../../common/GalleryCarousel';
 import { IconClock, IconPhone, IconInfo, IconStar, IconCheckCircle, IconExternalLink } from '../../Icons';
 import { useResortDetail } from '../../../core/hooks/useResortDetail';
