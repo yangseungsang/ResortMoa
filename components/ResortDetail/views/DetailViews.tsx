@@ -10,7 +10,8 @@ interface RoomDetailViewProps {
 }
 
 export const RoomDetailView: React.FC<RoomDetailViewProps> = ({ room, onBack }) => {
-  const roomImages = [room.image_path, ...(room.more_images || [])];
+  // Combine images and filter out empty strings to avoid broken slides
+  const roomImages = [room.image_path, ...(room.more_images || [])].filter(Boolean);
   
   return (
     <div className="bg-white h-full flex flex-col animate-fadeIn whitespace-normal">
@@ -28,12 +29,18 @@ export const RoomDetailView: React.FC<RoomDetailViewProps> = ({ room, onBack }) 
               <div>
                   <h4 className="text-lg font-bold text-slate-900">{room.name}</h4>
                   <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{room.capacity}</span>
-                      <span className="text-xs text-slate-500">{room.features}</span>
+                      {room.capacity && (
+                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{room.capacity}</span>
+                      )}
+                      {room.features && (
+                        <span className="text-xs text-slate-500">{room.features}</span>
+                      )}
                   </div>
               </div>
               <div className="text-sm text-slate-600 leading-relaxed">{room.description_long || "No description."}</div>
-              {room.amenities && (
+              
+              {/* Only render Amenities section if there are items */}
+              {room.amenities && room.amenities.length > 0 && (
                   <div>
                       <h5 className="font-bold text-slate-800 text-sm mb-2">Amenities</h5>
                       <div className="grid grid-cols-2 gap-2">

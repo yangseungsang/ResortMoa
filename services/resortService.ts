@@ -85,8 +85,15 @@ const transformResortData = (data: any): Resort => {
     images: uniqueImages,
     rooms: (data.rooms || []).map((room: any) => ({
       ...room,
-      image_path: normalizeImage(room.image_path),
-      more_images: (room.more_images || []).map(normalizeImage)
+      // Robust image path handling: check multiple keys
+      image_path: normalizeImage(room.image_path || room.image_url || room.imageUrl || room.thumbnail_url),
+      more_images: (room.more_images || []).map(normalizeImage),
+      // Robust description handling
+      description_long: room.description_long || room.description,
+      // Robust amenities handling: support array or comma-separated string
+      amenities: Array.isArray(room.amenities) 
+        ? room.amenities 
+        : (typeof room.amenities === 'string' ? room.amenities.split(',').map((s: string) => s.trim()).filter(Boolean) : [])
     })),
     nearby_places: rawNearby.map((place: any) => ({
       ...place,
