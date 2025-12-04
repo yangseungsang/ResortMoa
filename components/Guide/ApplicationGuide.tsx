@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { IconArrowLeft, IconBookOpen, IconCheckCircle, IconInfo, IconPhone } from '../Icons';
 import { GuideSection } from '../../types';
@@ -95,7 +94,7 @@ const ApplicationGuide: React.FC<ApplicationGuideProps> = ({ onBack }) => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-slate-50 min-h-0">
+      <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-slate-50 min-h-0 scrollbar-hide">
         
         {loading ? (
             <div className="flex justify-center py-10">

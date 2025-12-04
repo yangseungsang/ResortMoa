@@ -1,6 +1,5 @@
-
-import React from 'react';
-import { Resort } from '../../types';
+import React, { useEffect } from 'react';
+import { Resort, NearbyPlace } from '../../types';
 import { useResortDetail, DetailTab } from '../../core/hooks/useResortDetail';
 import { IconArrowLeft } from '../Icons';
 import { RoomDetailView, NearbyDetailView } from './views/DetailViews';
@@ -12,17 +11,30 @@ interface ResortDetailPanelProps {
   onBack: () => void;
   onMoveToLocation?: () => void;
   onFlyToLocation?: (lat: number, lng: number) => void;
+  nearbySelection?: { place: NearbyPlace, ts: number } | null;
 }
 
 const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({ 
   resort, 
   onBack, 
   onMoveToLocation, 
-  onFlyToLocation 
+  onFlyToLocation,
+  nearbySelection
 }) => {
   const detailHook = useResortDetail(resort);
   const { state, actions } = detailHook;
   const { activeTab, selectedRoom, selectedNearby } = state;
+
+  // React to external nearby selection (e.g. from Map)
+  useEffect(() => {
+    if (nearbySelection) {
+        actions.setSelectedNearby(nearbySelection.place);
+        // Ensure we are on the Nearby Tab or just let the View override handle it?
+        // Actually, if we set selectedNearby, the view renders immediately below.
+        // We can also switch tab to NEARBY for consistency when going back.
+        actions.setActiveTab(DetailTab.NEARBY);
+    }
+  }, [nearbySelection]);
 
   // 1. Show Room Detail View
   if (selectedRoom) {
@@ -66,7 +78,7 @@ const ResortDetailPanel: React.FC<ResortDetailPanelProps> = ({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto bg-white">
+      <div className="flex-1 overflow-y-auto bg-white scrollbar-hide">
         {activeTab === DetailTab.OVERVIEW && (
             <OverviewTab resort={resort} hookData={detailHook} />
         )}

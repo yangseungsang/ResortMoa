@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { RoomType, NearbyPlace, PlaceCategory } from '../../../types';
 import { GalleryCarousel } from '../../common/GalleryCarousel';
-import { IconArrowLeft, IconUsers, IconBed, IconCamera } from '../../Icons';
+import { IconArrowLeft, IconUsers, IconBed, IconCamera, IconExternalLink, IconMapPin } from '../../Icons';
 
 interface RoomDetailViewProps {
   room: RoomType;
@@ -21,7 +20,7 @@ export const RoomDetailView: React.FC<RoomDetailViewProps> = ({ room, onBack }) 
           </button>
           <h3 className="font-bold text-slate-800">Room Details</h3>
        </div>
-       <div className="flex-1 overflow-y-auto p-4 space-y-6 min-h-0">
+       <div className="flex-1 overflow-y-auto p-4 space-y-6 min-h-0 scrollbar-hide">
           <div className="rounded-xl overflow-hidden shadow-sm">
              <GalleryCarousel images={roomImages} showTitle={false} heightClass="h-64" />
           </div>
@@ -82,7 +81,7 @@ export const NearbyDetailView: React.FC<NearbyDetailViewProps> = ({ place, onBac
             </button>
             <h3 className="font-bold text-slate-800">Place Details</h3>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-5 min-h-0">
+        <div className="flex-1 overflow-y-auto p-4 space-y-5 min-h-0 scrollbar-hide">
             {placeImages.length > 0 && (
                 <div className="rounded-xl overflow-hidden shadow-sm">
                      <GalleryCarousel images={placeImages} showTitle={false} heightClass="h-56" />
@@ -95,6 +94,12 @@ export const NearbyDetailView: React.FC<NearbyDetailViewProps> = ({ place, onBac
                         {place.category}
                     </span>
                 </div>
+                {place.address && (
+                    <div className="flex items-center text-sm text-slate-500 mt-2">
+                        <IconMapPin className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />
+                        <span>{place.address}</span>
+                    </div>
+                )}
             </div>
             
             {/* Dynamic Info Attributes */}
@@ -106,6 +111,30 @@ export const NearbyDetailView: React.FC<NearbyDetailViewProps> = ({ place, onBac
                                 <span className="text-slate-500 text-xs font-medium">{attr.label}</span>
                                 <span className="text-slate-800 font-semibold text-right">{attr.value}</span>
                             </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* External Links Section */}
+            {place.external_links && place.external_links.length > 0 && (
+                <div>
+                    <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                        <IconExternalLink className="w-3.5 h-3.5" />
+                        <span>External Info</span>
+                    </h5>
+                    <div className="grid grid-cols-1 gap-2">
+                        {place.external_links.map((link, idx) => (
+                            <a 
+                                key={idx} 
+                                href={link.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors group"
+                            >
+                                <span className="text-sm font-semibold text-slate-700 group-hover:text-teal-700">{link.label}</span>
+                                <IconExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                            </a>
                         ))}
                     </div>
                 </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 
 interface MobileBottomSheetProps {
@@ -177,7 +176,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ children, 
         <div 
             ref={contentRef}
             className={`
-                flex-1 overflow-y-auto bg-white
+                flex-1 overflow-y-auto bg-white scrollbar-hide
                 ${height >= 98 ? 'overflow-y-auto' : 'overflow-hidden'}
             `}
         >

@@ -13,6 +13,7 @@ interface MapControllerProps {
   resorts: Resort[];
   selectedResort: Resort | null;
   onResortSelect: (resort: Resort) => void;
+  onNearbySelect?: (placeId: number) => void;
 }
 
 const KOREA_BOUNDS = L.latLngBounds([32.8, 124.5], [38.9, 132.0]);
@@ -68,16 +69,31 @@ const createGroupMarkerIcon = (count: number) => L.divIcon({
 
 // --- Component ---
 
-const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ resorts, selectedResort, onResortSelect }, ref) => {
+const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ resorts, selectedResort, onResortSelect, onNearbySelect }, ref) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<number, L.Marker>>(new Map());
   const nearbyLayerRef = useRef<L.LayerGroup | null>(null);
   
   const onResortSelectRef = useRef(onResortSelect);
+  const onNearbySelectRef = useRef(onNearbySelect);
+
   useEffect(() => {
     onResortSelectRef.current = onResortSelect;
-  }, [onResortSelect]);
+    onNearbySelectRef.current = onNearbySelect;
+  }, [onResortSelect, onNearbySelect]);
+
+  // Setup Global Handler for Popup Clicks (Bridge between Leaflet HTML and React)
+  useEffect(() => {
+    (window as any).resortMoaOnNearbyClick = (id: number) => {
+        if (onNearbySelectRef.current) {
+            onNearbySelectRef.current(id);
+        }
+    };
+    return () => {
+        delete (window as any).resortMoaOnNearbyClick;
+    }
+  }, []);
 
   useImperativeHandle(ref, () => ({
     flyToLocation: (lat: number, lng: number) => {
@@ -101,7 +117,8 @@ const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ res
          try {
             map.flyTo(targetCenter, targetZoom, { 
                 duration: 1.5,
-                easeLinearity: 0.25
+                easeLinearity: 0.25,
+                noMoveStart: true 
             });
          } catch {
             map.setView(targetCenter, targetZoom);
@@ -232,9 +249,12 @@ const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ res
                 // Cluster
                 const marker = L.marker(latLng, { icon: createGroupMarkerIcon(group.length), zIndexOffset: 2000 });
                 const listHtml = group.map(p => `
-                       <div class="flex items-center justify-between py-2 px-3 border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                           <span class="font-bold text-slate-800 text-xs truncate">${p.name}</span>
-                           <span class="text-[10px] text-white px-1.5 py-0.5 rounded-full font-bold" style="background-color: ${getColorForCategory(p.category)}">${p.category}</span>
+                       <div 
+                         onclick="window.resortMoaOnNearbyClick(${p.id})"
+                         class="flex items-center justify-between py-2 px-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer active:bg-slate-100 transition-colors"
+                       >
+                           <span class="font-bold text-slate-800 text-xs truncate pointer-events-none">${p.name}</span>
+                           <span class="text-[10px] text-white px-1.5 py-0.5 rounded-full font-bold pointer-events-none" style="background-color: ${getColorForCategory(p.category)}">${p.category}</span>
                        </div>`).join('');
        
                marker.bindPopup(`
@@ -252,17 +272,20 @@ const MapController = forwardRef<MapControllerHandle, MapControllerProps>(({ res
                 const markerIcon = imageUrl ? createNearbyImageMarker(imageUrl, color) : createNearbyMarkerIcon(color);
 
                 const marker = L.marker(latLng, { icon: markerIcon, zIndexOffset: 500 });
+                
+                // Add click handler to marker for direct navigation
+                marker.on('click', () => {
+                    if (onNearbySelectRef.current) {
+                        onNearbySelectRef.current(place.id);
+                    }
+                });
+
                 marker.bindTooltip(place.name, {
                     permanent: false, direction: 'bottom', offset: [0, 8],
                     className: 'px-2 py-1 bg-white text-slate-800 text-xs rounded shadow border font-sans font-bold'
                 });
-                marker.bindPopup(`
-                    <div class="text-xs font-sans p-2 min-w-[160px]">
-                        <strong class="block mb-1 text-slate-800">${place.name}</strong>
-                        <span class="text-white px-2 py-0.5 rounded-full text-[10px] font-bold" style="background-color: ${color}">${place.category}</span>
-                        <p class="text-slate-500 mt-1">${place.description || ''}</p>
-                    </div>
-                `);
+                
+                // Popup removed to allow direct navigation on click
                 nearbyLayerRef.current?.addLayer(marker);
             }
         });

@@ -53,7 +53,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ resort, hookData }) =>
                     </div>
                     {/* Render newlines in description */}
                     <div className={`text-xs opacity-90 leading-relaxed whitespace-pre-line ${rule.ui_theme.text}`}>
-                        {rule.description}
+                        {(rule.description || '').replace(/\\n/g, '\n')}
                     </div>
                 </div>
             )}

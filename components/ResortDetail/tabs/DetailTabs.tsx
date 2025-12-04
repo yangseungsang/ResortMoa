@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Resort, RoomType, NearbyPlace, PlaceCategory } from '../../../types';
+import { RoomType, NearbyPlace, PlaceCategory } from '../../../types';
 import { ImageWithFallback } from '../../common/ImageWithFallback';
 import { IconCamera, IconUsers, IconBed, IconUtensils, IconTent, IconShoppingBag, IconMapPin } from '../../Icons';
 
@@ -55,10 +55,10 @@ interface NearbyTabProps {
 export const NearbyTab: React.FC<NearbyTabProps> = ({ places, onSelect }) => {
     const getIcon = (category: PlaceCategory) => {
         switch (category) {
-          case PlaceCategory.FOOD: return <IconUtensils className="w-4 h-4" />;
-          case PlaceCategory.TOUR: return <IconTent className="w-4 h-4" />;
-          case PlaceCategory.STORE: return <IconShoppingBag className="w-4 h-4" />;
-          default: return <IconMapPin className="w-4 h-4" />;
+          case PlaceCategory.FOOD: return <IconUtensils className="w-5 h-5" />;
+          case PlaceCategory.TOUR: return <IconTent className="w-5 h-5" />;
+          case PlaceCategory.STORE: return <IconShoppingBag className="w-5 h-5" />;
+          default: return <IconMapPin className="w-5 h-5" />;
         }
       };
   
@@ -73,23 +73,42 @@ export const NearbyTab: React.FC<NearbyTabProps> = ({ places, onSelect }) => {
   
       return (
         <div className="space-y-3 p-4 animate-fadeIn pb-10">
-          {(places || []).map((place) => (
-            <div 
-              key={place.id} 
-              onClick={() => onSelect(place)}
-              className="flex bg-white p-3 rounded-xl border border-slate-100 shadow-sm items-start hover:border-teal-200 cursor-pointer transition-colors"
-            >
-              <div className={`p-2 rounded-lg ${getColor(place.category)} mr-3 flex-shrink-0`}>
-                {getIcon(place.category)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between">
-                  <h4 className="font-semibold text-slate-800 text-sm truncate">{place.name}</h4>
+          {(places || []).map((place) => {
+            const imageUrl = place.image_url || (place.images && place.images[0]);
+
+            return (
+                <div 
+                key={place.id} 
+                onClick={() => onSelect(place)}
+                className="flex bg-white p-3 rounded-xl border border-slate-100 shadow-sm items-center hover:border-teal-200 cursor-pointer transition-colors"
+                >
+                <div className="mr-3 flex-shrink-0">
+                    {imageUrl ? (
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-50 border border-slate-100">
+                            <ImageWithFallback 
+                                src={imageUrl} 
+                                alt={place.name} 
+                                className="w-full h-full object-cover" 
+                            />
+                        </div>
+                    ) : (
+                        <div className={`w-12 h-12 flex items-center justify-center rounded-lg ${getColor(place.category)}`}>
+                            {getIcon(place.category)}
+                        </div>
+                    )}
                 </div>
-                <p className="text-xs text-slate-500 mt-1 truncate">{place.description}</p>
-              </div>
-            </div>
-          ))}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-semibold text-slate-800 text-sm truncate mr-2">{place.name}</h4>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 ${getColor(place.category)}`}>
+                            {place.category}
+                        </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">{place.description}</p>
+                </div>
+                </div>
+            );
+          })}
           {(!places || places.length === 0) && (
               <div className="text-center py-8 text-slate-400 text-xs">
                   No nearby information added yet.

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Resort } from '../types';
+import { Resort, NearbyPlace } from '../types';
 import { useResorts } from '../core/hooks/useResorts';
 import { getResortById, getRegions, getBrands } from '../services/resortService';
 import MapController, { MapControllerHandle } from '../components/Map/MapController';
@@ -17,6 +17,14 @@ const MainPage: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [isMobileListOpen, setIsMobileListOpen] = useState(false);
+  
+  // New state to manage bottom sheet visibility independently of resort selection
+  // This ensures map markers stay visible even when the sheet is minimized
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+
+  // Trigger state for selecting a nearby place from the map
+  // Wraps place object and timestamp to allow re-selection of the same place
+  const [nearbySelection, setNearbySelection] = useState<{ place: NearbyPlace, ts: number } | null>(null);
   
   // Filter Options
   const [regionOptions, setRegionOptions] = useState<string[]>([]);
@@ -45,15 +53,26 @@ const MainPage: React.FC = () => {
   }, [isSidebarCollapsed]);
 
   // --- Handlers ---
-  const handleBackToList = () => {
+  
+  // Fully deselect resort (Back to List) - Clears map markers and selection
+  const handleFullReset = () => {
       setSelectedResort(null);
+      setIsBottomSheetOpen(false);
+      setNearbySelection(null);
+  };
+
+  // Only close the sheet, but keep the resort selected (View Map with Markers)
+  const handleSheetDismiss = () => {
+      setIsBottomSheetOpen(false);
   };
 
   const handleResortSelect = async (resort: Resort) => {
     setSelectedResort(resort);
+    setIsBottomSheetOpen(true); // Explicitly open the sheet
     setShowGuide(false);
     setIsMobileListOpen(false);
     setIsSidebarCollapsed(false);
+    setNearbySelection(null);
     
     mapRef.current?.flyToLocation(resort.latitude, resort.longitude);
 
@@ -62,6 +81,21 @@ const MainPage: React.FC = () => {
         if (fullData) setSelectedResort(fullData);
     } catch (error) {
         console.error("Failed to fetch resort details", error);
+    }
+  };
+
+  const handleNearbySelectFromMap = (placeId: number) => {
+    if (!selectedResort || !selectedResort.nearby_places) return;
+    const place = selectedResort.nearby_places.find(p => p.id === placeId);
+    if (place) {
+        setNearbySelection({ place, ts: Date.now() });
+        setIsBottomSheetOpen(true); // Open sheet if closed
+        // If on desktop sidebar is collapsed, we might want to open it, 
+        // but user might just want to see popup. 
+        // However, this handler is for "navigating to details", so we should ensure visibility.
+        if (window.innerWidth >= 768) {
+           setIsSidebarCollapsed(false);
+        }
     }
   };
 
@@ -74,6 +108,7 @@ const MainPage: React.FC = () => {
       setShowGuide(nextState);
       if (nextState) {
           setSelectedResort(null);
+          setIsBottomSheetOpen(false);
           setIsSidebarCollapsed(false);
       }
   };
@@ -126,6 +161,10 @@ const MainPage: React.FC = () => {
     );
   };
 
+  // Determine visibility of the "List View" floating button
+  // Show it when: Guide is closed AND (No resort selected OR Resort selected but sheet is minimized)
+  const showListButton = !showGuide && (!selectedResort || !isBottomSheetOpen);
+
   return (
     <div className="flex h-[100svh] w-screen overflow-hidden bg-slate-50 relative">
       {/* Sidebar */}
@@ -140,9 +179,10 @@ const MainPage: React.FC = () => {
             {selectedResort ? (
                 <ResortDetailPanel 
                     resort={selectedResort} 
-                    onBack={handleBackToList}
+                    onBack={handleFullReset}
                     onMoveToLocation={() => handleFlyToCoords(selectedResort.latitude, selectedResort.longitude)}
                     onFlyToLocation={handleFlyToCoords}
+                    nearbySelection={nearbySelection}
                 />
             ) : showGuide ? (
                 <ApplicationGuide onBack={() => setShowGuide(false)} />
@@ -256,16 +296,18 @@ const MainPage: React.FC = () => {
             ref={mapRef} 
             resorts={resorts} 
             selectedResort={selectedResort} 
-            onResortSelect={handleResortSelect} 
+            onResortSelect={handleResortSelect}
+            onNearbySelect={handleNearbySelectFromMap}
         />
 
-        <MobileBottomSheet isVisible={!!selectedResort} onClose={handleBackToList}>
+        <MobileBottomSheet isVisible={!!selectedResort && isBottomSheetOpen} onClose={handleSheetDismiss}>
             {selectedResort && (
                 <ResortDetailPanel 
                     resort={selectedResort} 
-                    onBack={handleBackToList}
+                    onBack={handleFullReset}
                     onMoveToLocation={() => handleFlyToCoords(selectedResort.latitude, selectedResort.longitude)}
                     onFlyToLocation={handleFlyToCoords}
+                    nearbySelection={nearbySelection}
                 />
             )}
         </MobileBottomSheet>
@@ -276,7 +318,7 @@ const MainPage: React.FC = () => {
             </div>
         )}
 
-        {!selectedResort && !showGuide && (
+        {showListButton && (
             <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[400] md:hidden">
                 <button onClick={() => setIsMobileListOpen(true)} className="bg-white text-slate-800 px-5 py-2.5 rounded-full shadow-lg font-semibold text-sm flex items-center space-x-2 border border-slate-100 active:scale-95 transition-transform">
                     <IconList className="w-4 h-4" /><span>List View</span>

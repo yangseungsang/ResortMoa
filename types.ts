@@ -1,4 +1,5 @@
 
+
 export enum PlaceCategory {
   TOUR = 'TOUR',
   FOOD = 'FOOD',
@@ -48,6 +49,11 @@ export interface RoomType {
   more_images?: string[];
 }
 
+export interface ExternalLink {
+  label: string;
+  url: string;
+}
+
 export interface NearbyPlace {
   id: number;
   name: string;
@@ -60,11 +66,8 @@ export interface NearbyPlace {
   more_images?: string[];
   detail_content?: string;
   info_attributes?: { label: string; value: string }[];
-}
-
-export interface ExternalLink {
-  label: string;
-  url: string;
+  external_links?: ExternalLink[];
+  address?: string;
 }
 
 export interface Resort {

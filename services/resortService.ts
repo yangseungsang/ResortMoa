@@ -101,7 +101,8 @@ const transformResortData = (data: any): Resort => {
       longitude: resolveCoordinate(place, ['longitude', 'lng', 'mapx']),
       image_url: normalizeImage(place.image_url || place.imageUrl),
       images: (place.images || []).map(normalizeImage),
-      more_images: (place.more_images || []).map(normalizeImage)
+      more_images: (place.more_images || []).map(normalizeImage),
+      external_links: place.external_links || []
     })),
     external_links: data.external_links || []
   };
